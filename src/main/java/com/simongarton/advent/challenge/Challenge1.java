@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -68,13 +67,11 @@ public class Challenge1 {
     }
 
     private List<Long> readValues() {
-        List<Long> longList;
         try (final Stream<String> lines = Files.lines(Paths.get(FILENAME))) {
-            longList = lines.mapToLong(Long::valueOf).boxed().collect(Collectors.toList());
+            return lines.mapToLong(Long::valueOf).boxed().collect(Collectors.toList());
         } catch (final IOException e) {
-            logger.error(e.getMessage());
+            this.logger.error(e.getMessage());
             return Collections.emptyList();
         }
-        return longList;
     }
 }
