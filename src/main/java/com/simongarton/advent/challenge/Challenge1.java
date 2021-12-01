@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -14,27 +16,20 @@ import java.util.stream.Stream;
 public class Challenge1 {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
+
     private static final String FILENAME = "data/day1.txt";
     private static final String TITLE_1 = "Sonar Sweep 1";
+    private static final String TITLE_2 = "Sonar Sweep 2";
 
-    public long run() {
-        return this.countIncreasesInDepth();
+    public void run() {
+        this.part1();
+        this.part2();
     }
 
-    private long countIncreasesInDepth() {
-        final List<Long> longList = this.getLongs();
+    private long part1() {
+        final List<Long> longList = this.readValues();
         final long start = System.currentTimeMillis();
-        long last = longList.get(0);
-        int index = 1;
-        int increases = 0;
-        while (index < longList.size()) {
-            final long current = longList.get(index);
-            if (current > last) {
-                increases++;
-            }
-            last = current;
-            index++;
-        }
+        final int increases = this.countIncreases(longList);
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_1,
                 increases,
@@ -42,12 +37,43 @@ public class Challenge1 {
         return increases;
     }
 
-    private List<Long> getLongs() {
-        List<Long> longList = new ArrayList<>();
+    private int countIncreases(final List<Long> values) {
+        long last = values.get(0);
+        int index = 1;
+        int increases = 0;
+        while (index < values.size()) {
+            final long current = values.get(index);
+            if (current > last) {
+                increases++;
+            }
+            last = current;
+            index++;
+        }
+        return increases;
+    }
+
+    private long part2() {
+        final List<Long> longList = this.readValues();
+        final long start = System.currentTimeMillis();
+        final List<Long> sumList = new ArrayList<>();
+        for (int i = 2; i < longList.size(); i++) {
+            sumList.add(longList.get(i - 2) + longList.get(i - 1) + longList.get(i));
+        }
+        final int increases = this.countIncreases(sumList);
+        this.logger.info(String.format("%s answer %d complete in %d ms",
+                TITLE_2,
+                increases,
+                System.currentTimeMillis() - start));
+        return increases;
+    }
+
+    private List<Long> readValues() {
+        List<Long> longList;
         try (final Stream<String> lines = Files.lines(Paths.get(FILENAME))) {
-            longList = lines.mapToLong(Long::new).boxed().collect(Collectors.toList());
+            longList = lines.mapToLong(Long::valueOf).boxed().collect(Collectors.toList());
         } catch (final IOException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
+            return Collections.emptyList();
         }
         return longList;
     }

@@ -1,8 +1,6 @@
 package com.simongarton.advent;
 
 import com.simongarton.advent.challenge.Challenge1;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class Main {
 
