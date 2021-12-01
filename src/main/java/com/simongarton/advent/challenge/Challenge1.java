@@ -15,6 +15,7 @@ public class Challenge1 {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
     private static final String FILENAME = "data/day1.txt";
+    private static final String TITLE_1 = "Sonar Sweep 1";
 
     public long run() {
         return this.countIncreasesInDepth();
@@ -34,6 +35,10 @@ public class Challenge1 {
             last = current;
             index++;
         }
+        this.logger.info(String.format("%s answer %d complete in %d ms",
+                TITLE_1,
+                increases,
+                System.currentTimeMillis() - start));
         return increases;
     }
 
