@@ -28,20 +28,20 @@ public class Challenge3 {
             final int ones = this.countOnesAtIndex(index, Arrays.asList(lines));
             counts.add(ones);
         }
-        String gamma = "";
-        String epsilon = "";
+        StringBuilder gamma = new StringBuilder();
+        StringBuilder epsilon = new StringBuilder();
         for (int index = 0; index < messageLength; index++) {
             if (counts.get(index) > (messageCount / 2)) {
-                gamma += "1";
-                epsilon += "0";
+                gamma.append("1");
+                epsilon.append("0");
             } else {
-                gamma += "0";
-                epsilon += "1";
+                gamma.append("0");
+                epsilon.append("1");
             }
         }
-        final Integer gammaValue = Integer.parseInt(gamma, 2);
-        final Integer epsilonValue = Integer.parseInt(epsilon, 2);
-        this.logger.info(gammaValue + " " + epsilonValue);
+        final Integer gammaValue = Integer.parseInt(gamma.toString(), 2);
+        final Integer epsilonValue = Integer.parseInt(epsilon.toString(), 2);
+        this.logger.info(gammaValue + " * " + epsilonValue);
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_1,
                 gammaValue * epsilonValue,
@@ -65,13 +65,13 @@ public class Challenge3 {
         while (currentLines.size() > 1) {
             currentLines = this.reduceList(currentLines, 0, '1', '0');
         }
-        int oxygen = Integer.parseInt(currentLines.get(0), 2);
+        long oxygen = Integer.parseInt(currentLines.get(0), 2);
         currentLines = new ArrayList<>(Arrays.asList(lines));
         while (currentLines.size() > 1) {
             currentLines = this.reduceList(currentLines, 0, '0', '1');
         }
-        int co2 = Integer.parseInt(currentLines.get(0), 2);
-        this.logger.info(oxygen + " " + co2);
+        long co2 = Integer.parseInt(currentLines.get(0), 2);
+        this.logger.info(oxygen + " * " + co2);
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_2,
                 oxygen * co2,
