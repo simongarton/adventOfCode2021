@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Challenge3 {
 
@@ -23,15 +24,16 @@ public class Challenge3 {
         final long start = System.currentTimeMillis();
         final int messageLength = lines[0].length();
         final int messageCount = lines.length;
-        final List<Integer> counts = new ArrayList<>();
+        final List<Long> counts = new ArrayList<>();
         for (int index = 0; index < messageLength; index++) {
-            final int ones = this.countOnesAtIndex(index, Arrays.asList(lines));
-            counts.add(ones);
+            counts.add(this.countOnesAtIndex(index, Arrays.asList(lines)));
         }
-        StringBuilder gamma = new StringBuilder();
-        StringBuilder epsilon = new StringBuilder();
+        // these are inversed - could I just create epsilon from gamma afterwards ?
+        final StringBuilder gamma = new StringBuilder();
+        final StringBuilder epsilon = new StringBuilder();
+        final int half = messageCount / 2;
         for (int index = 0; index < messageLength; index++) {
-            if (counts.get(index) > (messageCount / 2)) {
+            if (counts.get(index) > half) {
                 gamma.append("1");
                 epsilon.append("0");
             } else {
@@ -49,14 +51,8 @@ public class Challenge3 {
         return gammaValue * epsilonValue;
     }
 
-    private int countOnesAtIndex(final int index, final List<String> lines) {
-        int ones = 0;
-        for (final String message : lines) {
-            if (message.charAt(index) == '1') {
-                ones++;
-            }
-        }
-        return ones;
+    private long countOnesAtIndex(final int index, final List<String> lines) {
+        return lines.stream().filter(l -> l.charAt(index) == '1').count();
     }
 
     private long part2(final String[] lines) {
@@ -65,12 +61,12 @@ public class Challenge3 {
         while (currentLines.size() > 1) {
             currentLines = this.reduceList(currentLines, 0, '1', '0');
         }
-        long oxygen = Integer.parseInt(currentLines.get(0), 2);
+        final long oxygen = Integer.parseInt(currentLines.get(0), 2);
         currentLines = new ArrayList<>(Arrays.asList(lines));
         while (currentLines.size() > 1) {
             currentLines = this.reduceList(currentLines, 0, '0', '1');
         }
-        long co2 = Integer.parseInt(currentLines.get(0), 2);
+        final long co2 = Integer.parseInt(currentLines.get(0), 2);
         this.logger.info(oxygen + " * " + co2);
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_2,
@@ -79,21 +75,13 @@ public class Challenge3 {
         return oxygen * co2;
     }
 
-    private List<String> reduceList(final List<String> currentLines, int index, char v1, char v2) {
+    private List<String> reduceList(final List<String> currentLines, final int index, final char v1, final char v2) {
         if (currentLines.size() == 1) {
             return currentLines;
         }
-        final List<String> newLines = new ArrayList<>();
-        final int ones = this.countOnesAtIndex(index, currentLines);
-        char match = v2;
-        if (ones >= (currentLines.size() / 2.0)) {
-            match = v1;
-        }
-        for (final String line : currentLines) {
-            if (line.charAt(index) == match) {
-                newLines.add(line);
-            }
-        }
-        return this.reduceList(newLines, ++index, v1, v2);
+        final long ones = this.countOnesAtIndex(index, currentLines);
+        final char match = ones >= (currentLines.size() / 2.0) ? v1 : v2;
+        final List<String> newLines = currentLines.stream().filter(l -> l.charAt(index) == match).collect(Collectors.toList());
+        return this.reduceList(newLines, index + 1, v1, v2);
     }
 }
