@@ -2,6 +2,7 @@ package com.simongarton.advent;
 
 import com.simongarton.advent.challenge.Challenge1;
 import com.simongarton.advent.challenge.Challenge2;
+import com.simongarton.advent.challenge.Challenge3;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -18,6 +19,7 @@ public class Main {
     private void run() throws IOException {
         this.day1();
         this.day2();
+        this.day3();
     }
 
     private void day1() throws IOException {
@@ -28,5 +30,10 @@ public class Main {
     private void day2() throws IOException {
         final String[] lines = Files.readAllLines(Paths.get("data/day2.txt")).toArray(new String[0]);
         new Challenge2().run(lines);
+    }
+
+    private void day3() throws IOException {
+        final String[] lines = Files.readAllLines(Paths.get("data/day3.txt")).toArray(new String[0]);
+        new Challenge3().run(lines);
     }
 }

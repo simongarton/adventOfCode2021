@@ -5,11 +5,6 @@ import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
 public class Challenge2 {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
@@ -24,11 +19,11 @@ public class Challenge2 {
 
     private int part1(final String[] lines) {
         final long start = System.currentTimeMillis();
-        Coord c = new Coord(0,0);
-        for (String line : lines) {
-            c = move(line, c);
+        final Coord c = new Coord(0, 0, 0);
+        for (final String line : lines) {
+            this.move(line, c);
         }
-        int destination = c.destination();
+        final int destination = c.destination();
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_1,
                 destination,
@@ -36,11 +31,11 @@ public class Challenge2 {
         return destination;
     }
 
-    private Coord move(String line, Coord c) {
-        String[] commands = line.split(" ");
-        String command = commands[0];
-        int delta = Integer.parseInt(commands[1]);
-        switch(command) {
+    private Coord move(final String line, final Coord c) {
+        final String[] commands = line.split(" ");
+        final String command = commands[0];
+        final int delta = Integer.parseInt(commands[1]);
+        switch (command) {
             case "forward":
                 c.setX(c.getX() + delta);
                 break;
@@ -56,8 +51,39 @@ public class Challenge2 {
         return c;
     }
 
+    private Coord moveWithAim(final String line, final Coord c) {
+        final String[] commands = line.split(" ");
+        final String command = commands[0];
+        final int delta = Integer.parseInt(commands[1]);
+        switch (command) {
+            case "forward":
+                c.setX(c.getX() + delta);
+                c.setZ(c.getZ() + (delta * c.getAim()));
+                break;
+            case "up":
+                c.setAim(c.getAim() - delta);
+                break;
+            case "down":
+                c.setAim(c.getAim() + delta);
+                break;
+            default:
+                throw new RuntimeException("Unknown command " + command);
+        }
+        return c;
+    }
+
     private long part2(final String[] lines) {
-        return 0;
+        final long start = System.currentTimeMillis();
+        final Coord c = new Coord(0, 0, 0);
+        for (final String line : lines) {
+            this.moveWithAim(line, c);
+        }
+        final int destination = c.destination();
+        this.logger.info(String.format("%s answer %d complete in %d ms",
+                TITLE_2,
+                destination,
+                System.currentTimeMillis() - start));
+        return destination;
     }
 
     @Data
@@ -65,9 +91,10 @@ public class Challenge2 {
     private static final class Coord {
         int x;
         int z;
+        int aim;
 
         public int destination() {
-            return x * z;
+            return this.x * this.z;
         }
     }
 }
