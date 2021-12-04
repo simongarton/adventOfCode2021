@@ -9,6 +9,9 @@ import java.util.List;
 
 public class Challenge4 {
 
+    // done in around 58 ms
+    // remove logging and done in 19 ms
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
     private static final String TITLE_1 = "Giant Squid 1";
@@ -50,7 +53,7 @@ public class Challenge4 {
     private int scoreBoards(final List<String> numbers, final List<Board> boards) {
         for (int i = 0; i < numbers.size(); i++) {
             final String move = numbers.get(i);
-            System.out.println("move " + i + " " + move);
+//            System.out.println("move " + i + " '" + move + "'");
             for (final Board board : boards) {
                 if (board.winningMove(move, i)) {
                     return board.score(Integer.parseInt(move));
@@ -64,7 +67,7 @@ public class Challenge4 {
         int boardsWon = 0;
         for (int i = 0; i < numbers.size(); i++) {
             final String move = numbers.get(i);
-            System.out.println("move " + i + " " + move);
+//            System.out.println("move " + i + " " + move);
             for (final Board board : boards) {
                 if (!board.inPlay) {
                     continue;
@@ -119,7 +122,7 @@ public class Challenge4 {
             for (int row = 0; row < 5; row++) {
                 final StringBuilder line = new StringBuilder();
                 for (int col = 0; col < 5; col++) {
-                    line.append(this.squares[(row * 5) + col]).append(" ");
+                    line.append(this.padTo(this.squares[(row * 5) + col], 2)).append(" ");
                 }
                 System.out.println(line);
             }
@@ -130,9 +133,9 @@ public class Challenge4 {
                 final StringBuilder line = new StringBuilder();
                 for (int col = 0; col < 5; col++) {
                     if (this.scores[(row * 5) + col]) {
-                        line.append("*");
+                        line.append(" * ");
                     } else {
-                        line.append(".");
+                        line.append(" . ");
                     }
                 }
                 System.out.println(line);
@@ -155,9 +158,9 @@ public class Challenge4 {
                         this.scores[(row * 5) + 2] &&
                         this.scores[(row * 5) + 3] &&
                         this.scores[(row * 5) + 4]) {
-                    System.out.println("win on board " + this.id + " move " + moveId + " (" + move + ") row");
-                    this.printBoard();
-                    this.printBoardScores();
+//                    System.out.println("win on board " + this.id + " move " + moveId + " ('" + move + "') row");
+//                    this.printBoard();
+//                    this.printBoardScores();
                     this.inPlay = false;
                     return true;
                 }
@@ -168,9 +171,9 @@ public class Challenge4 {
                         this.scores[col + 10] &&
                         this.scores[col + 15] &&
                         this.scores[col + 20]) {
-                    System.out.println("win on board " + this.id + " move " + moveId + " (" + move + ") col");
-                    this.printBoard();
-                    this.printBoardScores();
+//                    System.out.println("win on board " + this.id + " move " + moveId + " ('" + move + "') col");
+//                    this.printBoard();
+//                    this.printBoardScores();
                     this.inPlay = false;
                     return true;
                 }
@@ -185,8 +188,15 @@ public class Challenge4 {
                     total += Integer.parseInt(this.squares[i]);
                 }
             }
-            System.out.println("unscored " + total + " * move " + lastMove + " = " + total * lastMove);
+//            System.out.println("unscored " + total + " * move '" + lastMove + "' = " + total * lastMove);
             return total * lastMove;
+        }
+
+        private String padTo(final String s, final int size) {
+            if (s.length() > size) {
+                return "*".repeat(size);
+            }
+            return " ".repeat(size - s.length()) + s;
         }
     }
 }
