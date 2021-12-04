@@ -9,17 +9,13 @@ import java.util.List;
 
 public class Challenge4 {
 
-    // part 1 wrong answers
-    // 82 : didn't multiple
-    // 325 : didn't score. RTFQ
-    // 3940 : hmm
-
     private final Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
     private static final String TITLE_1 = "Giant Squid 1";
     private static final String TITLE_2 = "Giant Squid 2";
 
     public void run(final String[] lines) {
+        // move board construction here to do once.
         this.part1(lines);
         this.part2(lines);
     }
@@ -39,6 +35,18 @@ public class Challenge4 {
         return winningBoard;
     }
 
+    private int part2(final String[] lines) {
+        final long start = System.currentTimeMillis();
+        final List<String> numbers = Arrays.asList(lines[0].split(","));
+        final List<Board> boards = this.constructBoards(lines);
+        final int winningBoard = this.scoreBoardsForLast(numbers, boards);
+        this.logger.info(String.format("%s answer %d complete in %d ms",
+                TITLE_2,
+                winningBoard,
+                System.currentTimeMillis() - start));
+        return winningBoard;
+    }
+
     private int scoreBoards(final List<String> numbers, final List<Board> boards) {
         for (int i = 0; i < numbers.size(); i++) {
             final String move = numbers.get(i);
@@ -46,6 +54,26 @@ public class Challenge4 {
             for (final Board board : boards) {
                 if (board.winningMove(move, i)) {
                     return board.score(Integer.parseInt(move));
+                }
+            }
+        }
+        throw new RuntimeException("No winner.");
+    }
+
+    private int scoreBoardsForLast(final List<String> numbers, final List<Board> boards) {
+        int boardsWon = 0;
+        for (int i = 0; i < numbers.size(); i++) {
+            final String move = numbers.get(i);
+            System.out.println("move " + i + " " + move);
+            for (final Board board : boards) {
+                if (!board.inPlay) {
+                    continue;
+                }
+                if (board.winningMove(move, i)) {
+                    boardsWon++;
+                    if (boardsWon == boards.size()) {
+                        return board.score(Integer.parseInt(move));
+                    }
                 }
             }
         }
@@ -67,23 +95,16 @@ public class Challenge4 {
         return boards;
     }
 
-    private int part2(final String[] lines) {
-        final long start = System.currentTimeMillis();
-        this.logger.info(String.format("%s answer %d complete in %d ms",
-                TITLE_2,
-                0,
-                System.currentTimeMillis() - start));
-        return 0;
-    }
-
     private static final class Board {
 
         int id;
+        boolean inPlay;
         String[] squares = new String[25];
         boolean[] scores = new boolean[25];
 
         public Board(final int id) {
             this.id = id;
+            this.inPlay = true;
         }
 
         public void addRow(final String line, final int row) {
@@ -137,6 +158,7 @@ public class Challenge4 {
                     System.out.println("win on board " + this.id + " move " + moveId + " (" + move + ") row");
                     this.printBoard();
                     this.printBoardScores();
+                    this.inPlay = false;
                     return true;
                 }
             }
@@ -149,6 +171,7 @@ public class Challenge4 {
                     System.out.println("win on board " + this.id + " move " + moveId + " (" + move + ") col");
                     this.printBoard();
                     this.printBoardScores();
+                    this.inPlay = false;
                     return true;
                 }
             }
