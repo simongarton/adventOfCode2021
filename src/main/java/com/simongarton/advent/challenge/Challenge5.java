@@ -20,8 +20,7 @@ public class Challenge5 {
 
     private int part1(final String[] lines) {
         final long start = System.currentTimeMillis();
-        final Floor floor = new Floor(lines);
-        floor.printFloor();
+        final Floor floor = new Floor(lines, false);
         final int score = floor.overlap(2);
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_1,
@@ -32,11 +31,13 @@ public class Challenge5 {
 
     private int part2(final String[] lines) {
         final long start = System.currentTimeMillis();
+        final Floor floor = new Floor(lines, true);
+        final int score = floor.overlap(2);
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_2,
-                0,
+                score,
                 System.currentTimeMillis() - start));
-        return 0;
+        return score;
     }
 
     private static final class Floor {
@@ -44,13 +45,13 @@ public class Challenge5 {
         private static final int MAX_DIM = 1000;
         int[] squares = new int[MAX_DIM * MAX_DIM];
 
-        public Floor(final String[] lines) {
+        public Floor(final String[] lines, boolean diagonals) {
             for (final String line : lines) {
-                this.drawVent(line);
+                this.drawVent(line, diagonals);
             }
         }
 
-        private void drawVent(final String line) {
+        private void drawVent(final String line, boolean diagonals) {
             final String[] coords = line.split("->");
             final Coord coord1 = new Coord(coords[0].trim());
             final Coord coord2 = new Coord(coords[1].trim());
@@ -63,9 +64,8 @@ public class Challenge5 {
                 this.drawHorizontalVent(coord1, coord2);
                 done = true;
             }
-            if (!done) {
-                System.out.println(line + " is not currently valid ...");
-                //throw new RuntimeException("not done.");
+            if (!done && diagonals) {
+                this.drawDiagonalVent(coord1, coord2);
             }
         }
 
@@ -87,6 +87,20 @@ public class Challenge5 {
                 startX = startX + delta;
             }
             this.squares[(coord1.y * MAX_DIM) + startX] = this.squares[(coord1.y * MAX_DIM) + startX] + 1;
+        }
+
+        private void drawDiagonalVent(final Coord coord1, final Coord coord2) {
+            final int deltaX = (coord1.x > coord2.x) ? -1 : +1;
+            final int deltaY = (coord1.y > coord2.y) ? -1 : +1;
+            int startX = coord1.x;
+            int startY = coord1.y;
+            while (startX != coord2.x) {
+                this.squares[(startY * MAX_DIM) + startX] = this.squares[(startY * MAX_DIM) + startX] + 1;
+                startX = startX + deltaX;
+                startY = startY + deltaY;
+
+            }
+            this.squares[(startY * MAX_DIM) + startX] = this.squares[(startY * MAX_DIM) + startX] + 1;
         }
 
         public void printFloor() {
