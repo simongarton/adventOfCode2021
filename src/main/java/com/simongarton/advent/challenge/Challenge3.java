@@ -43,7 +43,6 @@ public class Challenge3 {
         }
         final Integer gammaValue = Integer.parseInt(gamma.toString(), 2);
         final Integer epsilonValue = Integer.parseInt(epsilon.toString(), 2);
-        this.logger.info(gammaValue + " * " + epsilonValue);
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_1,
                 gammaValue * epsilonValue,
@@ -67,7 +66,6 @@ public class Challenge3 {
             currentLines = this.reduceList(currentLines, 0, '0', '1');
         }
         final long co2 = Integer.parseInt(currentLines.get(0), 2);
-        this.logger.info(oxygen + " * " + co2);
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_2,
                 oxygen * co2,
