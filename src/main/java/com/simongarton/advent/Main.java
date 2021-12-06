@@ -15,11 +15,12 @@ public class Main {
     }
 
     private void run() throws IOException {
-        this.day1();
-        this.day2();
-        this.day3();
-        this.day4();
-        this.day5();
+//        this.day1();
+//        this.day2();
+//        this.day3();
+//        this.day4();
+//        this.day5();
+        this.day6();
     }
 
     private void day1() throws IOException {
@@ -46,4 +47,10 @@ public class Main {
         final String[] lines = Files.readAllLines(Paths.get("data/day5.txt")).toArray(new String[0]);
         new Challenge5().run(lines);
     }
+
+    private void day6() throws IOException {
+        final String[] lines = Files.readAllLines(Paths.get("data/day6-sample.txt")).toArray(new String[0]);
+        new Challenge6().run(lines);
+    }
+
 }
