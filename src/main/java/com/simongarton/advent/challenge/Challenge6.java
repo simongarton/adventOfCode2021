@@ -3,10 +3,6 @@ package com.simongarton.advent.challenge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
 public class Challenge6 {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
@@ -22,70 +18,51 @@ public class Challenge6 {
     public Challenge6() {
     }
 
-    private int part1(final String[] lines) {
+    private long part1(final String[] lines) {
         final long start = System.currentTimeMillis();
-        List<Fish> fishes = result(lines, 80);
-        final int score = fishes.size();
+        final long[] buckets = new long[9];
+        this.loadFishIntoBuckets(buckets, lines);
+        final long result = this.breedFish(buckets, 80);
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_1,
-                score,
+                result,
                 System.currentTimeMillis() - start));
-        return score;
+        return result;
     }
 
-    private List<Fish> result(final String[] lines, int days) {
-        final List<Fish> fishes = this.loadFish(lines);
-        for (int day = 0; day < days; day++) {
-            final List<Fish> babies = new ArrayList<>();
-            for (final Fish fish : fishes) {
-                if (fish.live() == Action.BREED) {
-                    babies.add(new Fish(8));
-                }
-            }
-            fishes.addAll(babies);
-            System.out.println(day + 1 + " = " + fishes .size()) ; //+ " : " + fishes.stream().map(f -> String.valueOf(f.age)).collect(Collectors.joining(",")));
-        }
-        return fishes;
-    }
-
-    private List<Fish> loadFish(final String[] lines) {
-        final List<Fish> fish = new ArrayList<>();
-        final String[] ages = lines[0].split(",");
-        for (final String age : ages) {
-            fish.add(new Fish(Integer.parseInt(age)));
-        }
-        return fish;
-    }
-
-    private int part2(final String[] lines) {
+    private long part2(final String[] lines) {
         final long start = System.currentTimeMillis();
-        List<Fish> fishes = result(lines, 256);
-        final int score = fishes.size();
+        final long[] buckets = new long[9];
+        this.loadFishIntoBuckets(buckets, lines);
+        final long result = this.breedFish(buckets, 256);
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_2,
-                score,
+                result,
                 System.currentTimeMillis() - start));
-        return score;
+        return result;
     }
 
-    private static final class Fish {
-        int age;
-
-        public Fish(final int age) {
-            this.age = age;
-        }
-
-        public Action live() {
-            if (--this.age < 0) {
-                this.age = 6;
-                return Action.BREED;
+    private long breedFish(final long[] buckets, final int days) {
+        for (int day = 0; day < days; day++) {
+            final long breeders = buckets[0];
+            for (int i = 0; i < 8; i++) {
+                buckets[i] = buckets[i + 1];
             }
-            return Action.LIVE;
+            buckets[6] = buckets[6] + breeders;
+            buckets[8] = breeders;
         }
+        long total = 0;
+        for (int i = 0; i < 9; i++) {
+            total += buckets[i];
+        }
+        return total;
     }
 
-    private enum Action {
-        LIVE,
-        BREED
+    private void loadFishIntoBuckets(final long[] buckets, final String[] lines) {
+        final String[] ages = lines[0].split(",");
+        for (final String age : ages) {
+            final int fish = Integer.parseInt(age);
+            buckets[fish] = buckets[fish] + 1;
+        }
     }
 }
