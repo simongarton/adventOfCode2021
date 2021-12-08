@@ -32,11 +32,7 @@ public class Challenge8 {
     }
 
     private long count1478(final String[] lines) {
-        long total = 0;
-        for (final String line : lines) {
-            total += this.count1478(line);
-        }
-        return total;
+        return Arrays.stream(lines).map(this::count1478).mapToLong(Long::longValue).sum();
     }
 
     private long count1478(final String line) {
@@ -63,12 +59,7 @@ public class Challenge8 {
     }
 
     private long addOutputs(final String[] lines) {
-        // todo stream
-        long total = 0;
-        for (final String line : lines) {
-            total += this.addOutputs(line);
-        }
-        return total;
+        return Arrays.stream(lines).map(this::addOutputs).mapToLong(Long::longValue).sum();
     }
 
     private long addOutputs(final String line) {
@@ -116,10 +107,10 @@ public class Challenge8 {
     }
 
     private Map<String, Integer> figureWiring(final String[] signals) {
-        return this.figureWiringBruteForce(signals);
+        return this.figureWiringByDeduction(signals);
     }
 
-    private Map<String, Integer> figureWiringBruteForce(final String[] signals) {
+    private Map<String, Integer> figureWiringByDeduction(final String[] signals) {
         // this maps the individual segments, clearText:encrypted
         final Map<String, String> wiringMapping = this.wiringMapping(signals);
         final Map<String, String> reverseWiringMapping = new HashMap<>();
@@ -146,11 +137,11 @@ public class Challenge8 {
     }
 
     private String decrypt(final String encrypted, final Map<String, String> wiringMapping) {
-        String clearText = "";
+        StringBuilder clearText = new StringBuilder();
         for (int i = 0; i < encrypted.length(); i++) {
-            clearText += wiringMapping.get(encrypted.charAt(i) + "");
+            clearText.append(wiringMapping.get(encrypted.charAt(i) + ""));
         }
-        return clearText;
+        return clearText.toString();
     }
 
     private Map<String, Integer> buildClearTextValues() {
