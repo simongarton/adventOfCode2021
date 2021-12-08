@@ -49,7 +49,6 @@ public class Challenge8 {
                 total++;
             }
         }
-        System.out.println(line + " " + total);
         return total;
     }
 
@@ -64,6 +63,7 @@ public class Challenge8 {
     }
 
     private long addOutputs(final String[] lines) {
+        // todo stream
         long total = 0;
         for (final String line : lines) {
             total += this.addOutputs(line);
@@ -141,7 +141,7 @@ public class Challenge8 {
             encryptedValues.put(encrypted, value);
         }
 
-        // and I will then loook up the sorted signals in this.
+        // and I will then look up the sorted & encrypted signals in this.
         return encryptedValues;
     }
 
@@ -154,6 +154,7 @@ public class Challenge8 {
     }
 
     private Map<String, Integer> buildClearTextValues() {
+        // from inspection of the problem
         final Map<String, Integer> map = new HashMap<>();
         map.put("abcefg", 0);
         map.put("cf", 1);
@@ -169,51 +170,41 @@ public class Challenge8 {
     }
 
     private Map<String, String> wiringMapping(final String[] signals) {
+        final Map<String, Integer> frequencyAnalysis = this.getFrequencyAnalysis(signals);
+
         // this will give me a table of "x":"y" where x is the normal segment a-g (a top)
         // and y is how it's been wired up.
-
         final Map<String, String> wiringMapping = new HashMap<>();
 
         // To get a, I find the length 2 and length 3 : the extra one is a
         wiringMapping.put("a", this.findA(signals));
 
         // b is the only segment mentioned 6 times out of the 10 possibles
-        wiringMapping.put("b", this.findFromCount(signals, 6));
+        wiringMapping.put("b", this.findFromCount(frequencyAnalysis, 6));
 
         // c is one of two segments mentioned 8 times out of the 10 possibles, the other is a
-        wiringMapping.put("c", this.findC(signals, 8, wiringMapping.get("a")));
+        wiringMapping.put("c", this.findC(frequencyAnalysis, 8, wiringMapping.get("a")));
 
         // d is mentioned 7 times AND IS in the unique signal that is 4 chars long
-        wiringMapping.put("d", this.findDG(signals, 7, true));
+        wiringMapping.put("d", this.findDG(signals, frequencyAnalysis, 7, true));
 
         // e is the only segment mentioned 4 times out of the 10 possibles
-        wiringMapping.put("e", this.findFromCount(signals, 4));
+        wiringMapping.put("e", this.findFromCount(frequencyAnalysis, 4));
 
         // f is the only segment mentioned 9 times out of the 10 possibles
-        wiringMapping.put("f", this.findFromCount(signals, 9));
+        wiringMapping.put("f", this.findFromCount(frequencyAnalysis, 9));
 
         // g is mentioned 7 times BUT NOT in the unique signal that is 4 chars long
-        wiringMapping.put("g", this.findDG(signals, 7, false));
+        wiringMapping.put("g", this.findDG(signals, frequencyAnalysis, 7, false));
 
         return wiringMapping;
     }
 
-    private String findDG(final String[] signals, final int count, final boolean in4Count) {
-        // TODO precalculate
-        final Map<String, Integer> frequencyAnalysis = new HashMap<>();
-        String count4 = "";
-        for (final String signal : signals) {
-            if (signal.length() == 4) {
-                count4 = signal;
-            }
-            for (int i = 0; i < signal.length(); i++) {
-                final String c = signal.charAt(i) + "";
-                frequencyAnalysis.put(c, frequencyAnalysis.getOrDefault(c, 0) + 1);
-            }
-        }
-        if (count4 == "") {
-            throw new RuntimeException("Did not find count4 in DG");
-        }
+    private String findDG(final String[] signals, final Map<String, Integer> frequencyAnalysis, final int count, final boolean in4Count) {
+        final String count4 = Arrays.stream(signals)
+                .filter(s -> s.length() == 4)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No 4 char strings"));
         final List<String> options = new ArrayList<>();
         for (final Map.Entry<String, Integer> entry : frequencyAnalysis.entrySet()) {
             if (entry.getValue().equals(count)) {
@@ -232,15 +223,7 @@ public class Challenge8 {
         throw new RuntimeException("Could not find DG looking at " + count4);
     }
 
-    private String findC(final String[] signals, final int count, final String aWiring) {
-        // TODO precalculate
-        final Map<String, Integer> frequencyAnalysis = new HashMap<>();
-        for (final String signal : signals) {
-            for (int i = 0; i < signal.length(); i++) {
-                final String c = signal.charAt(i) + "";
-                frequencyAnalysis.put(c, frequencyAnalysis.getOrDefault(c, 0) + 1);
-            }
-        }
+    private String findC(final Map<String, Integer> frequencyAnalysis, final int count, final String aWiring) {
         final List<String> options = new ArrayList<>();
         for (final Map.Entry<String, Integer> entry : frequencyAnalysis.entrySet()) {
             if (entry.getValue().equals(count)) {
@@ -259,8 +242,7 @@ public class Challenge8 {
         throw new RuntimeException("Neither options for c was a:" + aWiring);
     }
 
-    private String findFromCount(final String[] signals, final int count) {
-        // TODO precalculate
+    private Map<String, Integer> getFrequencyAnalysis(final String[] signals) {
         final Map<String, Integer> frequencyAnalysis = new HashMap<>();
         for (final String signal : signals) {
             for (int i = 0; i < signal.length(); i++) {
@@ -268,6 +250,10 @@ public class Challenge8 {
                 frequencyAnalysis.put(c, frequencyAnalysis.getOrDefault(c, 0) + 1);
             }
         }
+        return frequencyAnalysis;
+    }
+
+    private String findFromCount(final Map<String, Integer> frequencyAnalysis, final int count) {
         for (final Map.Entry<String, Integer> entry : frequencyAnalysis.entrySet()) {
             if (entry.getValue().equals(count)) {
                 return entry.getKey();
@@ -285,20 +271,5 @@ public class Challenge8 {
             }
         }
         throw new RuntimeException("find() failed");
-    }
-
-    private Map<String, Integer> figureWiringCheating(final String signals) {
-        final Map<String, Integer> map = new HashMap<>();
-        map.put("acedgfb", 8);
-        map.put("cdfbe", 5);
-        map.put("gcdfa", 2);
-        map.put("fbcad", 3);
-        map.put("dab", 7);
-        map.put("cefabd", 9);
-        map.put("cdfgeb", 6);
-        map.put("eafb", 4);
-        map.put("cagedb", 0);
-        map.put("ab", 1);
-        return map;
     }
 }
