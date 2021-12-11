@@ -193,10 +193,11 @@ public class Challenge4 {
         }
 
         private String padTo(final String s, final int size) {
-            if (s.length() > size) {
-                return "*".repeat(size);
-            }
-            return " ".repeat(size - s.length()) + s;
+//            if (s.length() > size) {
+//                return "*".repeat(size);
+//            }
+//            return " ".repeat(size - s.length()) + s;
+            return s;
         }
     }
 }

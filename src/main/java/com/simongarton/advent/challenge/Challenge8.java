@@ -37,11 +37,12 @@ public class Challenge8 {
 
     private long count1478(final String line) {
         long total = 0;
+        List<Integer> options = new ArrayList<>(Arrays.asList(2,3,4,7));
         final String cleanLine = line.replace("  ", " ");
         final String[] parts = cleanLine.split("\\|");
         final String[] output = parts[1].trim().split(" ");
         for (final String digit : output) {
-            if (List.of(2, 3, 4, 7).contains(digit.length())) {
+            if (options.contains(digit.length())) {
                 total++;
             }
         }
