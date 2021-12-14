@@ -4,16 +4,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Challenge14 {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
-    private List<String> folds;
+    private List<Insertion> insertions;
 
-    private static final String TITLE_1 = "Transparent Origami 1";
-    private static final String TITLE_2 = "Transparent Origami 2";
+    private static final String TITLE_1 = "Extended Polymerization 1";
+    private static final String TITLE_2 = "Extended Polymerization 2";
 
     public void run(final String[] lines) {
         this.part1(lines);
@@ -25,10 +27,16 @@ public class Challenge14 {
 
     private long part1(final String[] lines) {
         final long start = System.currentTimeMillis();
-        final Page page = this.loadPaper(lines);
-        this.loadFolds(lines);
-        final Page finalPage = this.fold(page, true);
-        final long result = finalPage.score();
+        final String template = lines[0];
+        this.insertions = new ArrayList<>();
+        this.loadInsertions(lines);
+        String current = template;
+//        System.out.println(0 + " : " + current);
+        for (int step = 1; step <= 40; step++) {
+            current = this.applyInsertions(current);
+            System.out.println(step + " : " + current.length());
+        }
+        final long result = this.scorePolymer(current);
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_1,
                 result,
@@ -36,106 +44,73 @@ public class Challenge14 {
         return result;
     }
 
-    private Page fold(final Page page, boolean part1) {
-        Page currentPage = page;
-        for (final String fold : this.folds) {
-            System.out.println(fold);
-            if (fold.contains("fold along x")) {
-                currentPage = this.foldPageAlongX(fold, currentPage);
-            } else {
-                currentPage = this.foldPageAlongY(fold, currentPage);
+    private long scorePolymer(final String current) {
+        final Map<String, Integer> map = new HashMap<>();
+        for (int i = 0; i < current.length(); i++) {
+            final String element = current.charAt(i) + "";
+            map.put(element, map.getOrDefault(element, 0) + 1);
+        }
+        int min = Integer.MAX_VALUE;
+        String minChar = "";
+        int max = 0;
+        String maxChar = "";
+        for (final Map.Entry<String, Integer> entry : map.entrySet()) {
+            if (entry.getValue() < min) {
+                min = entry.getValue();
+                minChar = entry.getKey();
             }
-            currentPage.printGrid();
-            if (part1) {
-                break;
+            if (entry.getValue() > max) {
+                max = entry.getValue();
+                maxChar = entry.getKey();
             }
         }
-        return currentPage;
+        return map.get(maxChar) - map.get(minChar);
     }
 
-    private Page foldPageAlongY(final String fold, final Page currentPage) {
-        final String[] parts = fold.split("=");
-        final int foldLine = Integer.parseInt(parts[1]);
-        final Page newPage = new Page(currentPage.width, currentPage.height / 2);
-        for (int y = 0; y < currentPage.height; y++) {
-            for (int x = 0; x < currentPage.width; x++) {
-                // I think we simply skip the fold line, losing a line
-                int y1 = y;
-                if (y > foldLine) {
-                    y1 = foldLine - (y - foldLine);
-                }
-                if (currentPage.getCoord(x, y)) {
-                    newPage.setCoord(x, y1);
-                }
-            }
-        }
-        return newPage;
-    }
-
-    private Page foldPageAlongX(final String fold, final Page currentPage) {
-        final String[] parts = fold.split("=");
-        final int foldLine = Integer.parseInt(parts[1]);
-        final Page newPage = new Page(currentPage.width / 2, currentPage.height);
-        for (int y = 0; y < currentPage.height; y++) {
-            for (int x = 0; x < currentPage.width; x++) {
-                // I think we simply skip the fold line, losing a line
-                int x1 = x;
-                if (x > foldLine) {
-                    x1 = foldLine - (x - foldLine);
-                }
-                if (currentPage.getCoord(x, y)) {
-                    newPage.setCoord(x1, y);
+    private String applyInsertions(final String current) {
+        final List<Insertion> insertionsToApply = new ArrayList<>();
+        for (final Insertion insertion : this.insertions) {
+            for (int i = 0; i < current.length() - 1; i++) {
+                final String match = current.substring(i, i + 2);
+                if (match.equals(insertion.pattern)) {
+                    final Insertion newInsertion = insertion.copy();
+                    newInsertion.indexInTemplate = i + 1;
+                    insertionsToApply.add(newInsertion);
+//                    System.out.println("I will apply " + newInsertion.add + " between " + newInsertion.insertion + " at " + newInsertion.indexInTemplate);
                 }
             }
         }
-        return newPage;
+        return this.actuallyApplyInsertions(current, insertionsToApply);
     }
 
-    private void loadFolds(final String[] lines) {
-        this.folds = new ArrayList<>();
-        boolean skip = true;
-        for (final String line : lines) {
-            if (line.length() == 0) {
-                skip = false;
-                continue;
+    private void updateRemainingInsertionsIfLater(List<Insertion> insertionsToApply, int i) {
+        for (final Insertion insertion : insertionsToApply) {
+            if (insertion.indexInTemplate >= i) {
+                insertion.indexInTemplate++;
+//                System.out.println("I have changed " + insertion.add + " between " + insertion.insertion + " to now be " + insertion.indexInTemplate);
             }
-            if (skip) {
-                continue;
-            }
-            this.folds.add(line);
         }
     }
 
-    private Page loadPaper(final String[] lines) {
-        int width = 0;
-        int height = 0;
-        final List<Coord> coords = new ArrayList<>();
-        for (final String line : lines) {
-            if (line.length() == 0) {
-                break;
-            }
-            final Coord coord = new Coord(line);
-            if (coord.x > width) {
-                width = coord.x;
-            }
-            if (coord.y > height) {
-                height = coord.y;
-            }
-            coords.add(coord);
+    private String actuallyApplyInsertions(final String current, final List<Insertion> insertionsToApply) {
+        String inserted = current;
+        for (final Insertion insertion : insertionsToApply) {
+//            System.out.println("I am inserting " + insertion.add + " between " + insertion.insertion + " at " + insertion.indexInTemplate);
+            inserted = inserted.substring(0, insertion.indexInTemplate) + insertion.add + inserted.substring(insertion.indexInTemplate);
+            updateRemainingInsertionsIfLater(insertionsToApply, insertion.indexInTemplate);
         }
-        // coords are zero based
-        final Page page = new Page(++width, ++height);
-        page.loadCoords(coords);
-        page.printGrid();
-        return page;
+        return inserted;
+    }
+
+    private void loadInsertions(final String[] lines) {
+        for (int index = 2; index < lines.length; index++) {
+            this.insertions.add(new Insertion(lines[index]));
+        }
     }
 
     private long part2(final String[] lines) {
         final long start = System.currentTimeMillis();
-        final Page page = this.loadPaper(lines);
-        this.loadFolds(lines);
-        final Page finalPage = this.fold(page, false);
-        final long result = finalPage.score();
+        final long result = 0;
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_2,
                 result,
@@ -143,68 +118,28 @@ public class Challenge14 {
         return result;
     }
 
-    public static class Page {
-        private final boolean[] grid;
-        private final int width;
-        private final int height;
+    public static final class Insertion {
+        String left;
+        String right;
+        String pattern;
+        String add;
+        String insertion;
+        int indexInTemplate;
+        boolean apply;
 
-        public Page(final int width, final int height) {
-            this.width = width;
-            this.height = height;
-            this.grid = new boolean[this.height * this.width];
+        public Insertion(final String insertion) {
+            this.insertion = insertion;
+            final String[] parts = insertion.split(" -> ");
+            this.pattern = parts[0];
+            this.left = this.pattern.charAt(0) + "";
+            this.right = this.pattern.charAt(1) + "";
+            this.add = parts[1];
+            this.indexInTemplate = 0;
+            this.apply = false;
         }
 
-        public void loadCoords(final List<Coord> coords) {
-            for (final Coord coord : coords) {
-                final int index = (coord.y * this.width) + coord.x;
-                this.grid[index] = true;
-            }
-        }
-
-        public void printGrid() {
-            for (int y = 0; y < this.height; y++) {
-                final StringBuilder line = new StringBuilder();
-                for (int x = 0; x < this.width; x++) {
-                    if (this.grid[(y * this.width) + x]) {
-                        line.append("#");
-                    } else {
-                        line.append(".");
-                    }
-                }
-                System.out.println(line);
-            }
-        }
-
-        public void setCoord(final int x, final int y) {
-            final int index = (y * this.width) + x;
-            this.grid[index] = true;
-        }
-
-        public boolean getCoord(final int x, final int y) {
-            final int index = (y * this.width) + x;
-            return this.grid[index];
-        }
-
-        public long score() {
-            long score = 0;
-            // stream this
-            for (int index = 0; index < this.grid.length; index++) {
-                if (this.grid[index]) {
-                    score++;
-                }
-            }
-            return score;
-        }
-    }
-
-    public static class Coord {
-        private final int x;
-        private final int y;
-
-        public Coord(final String coordString) {
-            final String[] parts = coordString.split(",");
-            this.x = Integer.parseInt(parts[0]);
-            this.y = Integer.parseInt(parts[1]);
+        public Insertion copy() {
+            return new Insertion(this.insertion);
         }
     }
 }
