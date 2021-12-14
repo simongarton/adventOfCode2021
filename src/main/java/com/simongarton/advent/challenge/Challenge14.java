@@ -19,6 +19,7 @@ public class Challenge14 {
 
     public void run(final String[] lines) {
         this.part1(lines);
+        this.part1fast(lines);
         this.part2(lines);
     }
 
@@ -33,11 +34,26 @@ public class Challenge14 {
         String current = template;
         for (int step = 1; step <= 10; step++) {
             current = this.applyInsertions(current);
-            System.out.println(step + " l " + current.length() + " s " + this.scorePolymer(current) + " c " + current);
         }
         final long result = this.scorePolymer(current);
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_1,
+                result,
+                System.currentTimeMillis() - start));
+        return result;
+    }
+
+    protected long part1fast(final String[] lines) {
+        final long start = System.currentTimeMillis();
+        final String template = lines[0];
+        this.loadInsertions(lines);
+        Map<String, Long> pairs = this.buildPairs(template);
+        for (int step = 1; step <= 10; step++) {
+            pairs = this.applyInsertions(pairs);
+        }
+        final long result = this.scorePolymer(pairs, template);
+        this.logger.info(String.format("%s answer %d complete in %d ms",
+                TITLE_2,
                 result,
                 System.currentTimeMillis() - start));
         return result;
@@ -48,12 +64,10 @@ public class Challenge14 {
         final String template = lines[0];
         this.loadInsertions(lines);
         Map<String, Long> pairs = this.buildPairs(template);
-        debugPairs("pairs at start",pairs);
         for (int step = 1; step <= 40; step++) {
             pairs = this.applyInsertions(pairs);
-            debugPairs("pairs",pairs);
-            System.out.println(step + " s " + this.scorePolymer(pairs, template));
         }
+//        final long length = this.measurePolymer(pairs, template); // 20,890,720,927,745
         final long result = this.scorePolymer(pairs, template);
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_2,
@@ -62,26 +76,23 @@ public class Challenge14 {
         return result;
     }
 
-    private void debugPairs(String s, Map<String, Long> pairs) {
-        String line = "";
+    private void debugPairs(final String s, final Map<String, Long> pairs) {
+        final StringBuilder line = new StringBuilder();
         for (final Map.Entry<String, Long> entry : pairs.entrySet()) {
-            line += entry.getKey() + "=" + entry.getValue() + ", ";
+            line.append(entry.getKey()).append("=").append(entry.getValue()).append(", ");
         }
         System.out.println(s + " " + line);
     }
 
     protected Map<String, Long> applyInsertions(final Map<String, Long> pairs) {
-        final Map<String, Long> newPairs = new HashMap<>();
-        for (final Map.Entry<String, Long> entry : pairs.entrySet()) {
-            newPairs.put(entry.getKey(), entry.getValue());
-        }
+        final Map<String, Long> newPairs = new HashMap<>(pairs);
         for (final Insertion insertion : this.insertions) {
             if (pairs.containsKey(insertion.pattern)) {
                 // decrement the existing pair by how many we have of these.
                 newPairs.put(insertion.pattern, newPairs.get(insertion.pattern) - pairs.get(insertion.pattern));
                 // figure out the new ones
-                final String new1 = insertion.left + insertion.add;
-                final String new2 = insertion.add + insertion.right;
+                final String new1 = insertion.left + insertion.charToInsert;
+                final String new2 = insertion.charToInsert + insertion.right;
                 newPairs.put(new1, newPairs.getOrDefault(new1, 0L) + pairs.get(insertion.pattern));
                 newPairs.put(new2, newPairs.getOrDefault(new2, 0L) + pairs.get(insertion.pattern));
             }
@@ -104,18 +115,30 @@ public class Challenge14 {
         return this.scoreMap(map);
     }
 
-    protected long scoreMap(final Map<String, Long> map, String template) {
-        debugPairs("scoreMapTemplate", map);
+    protected long measureMap(final Map<String, Long> map, final String template) {
         // now halve them all
         for (final Map.Entry<String, Long> entry : map.entrySet()) {
-            map.put(entry.getKey(), entry.getValue()/2);
+            map.put(entry.getKey(), entry.getValue() / 2);
         }
-        // and unhalf the first and last
-        String first = template.substring(0, 1);
+        // and unhalve the first and last because they AREN'T duplicated
+        final String first = template.substring(0, 1);
         map.put(first, map.get(first) + 1);
-        String last = template.substring(template.length()-1, template.length());
+        final String last = template.substring(template.length() - 1, template.length());
         map.put(last, map.get(last) + 1);
-        debugPairs("scoreMapTemplate2", map);
+        return map.values().stream().mapToLong(Long::longValue).sum();
+    }
+
+    protected long scoreMap(final Map<String, Long> map, final String template) {
+        // now halve them all
+        for (final Map.Entry<String, Long> entry : map.entrySet()) {
+            map.put(entry.getKey(), entry.getValue() / 2);
+        }
+        // and unhalve the first and last because they AREN'T duplicated
+        final String first = template.substring(0, 1);
+        map.put(first, map.get(first) + 1);
+        final String last = template.substring(template.length() - 1, template.length());
+        map.put(last, map.get(last) + 1);
+        this.debugPairs("scoreMap", map);
         long min = Long.MAX_VALUE;
         String minChar = "";
         long max = 0;
@@ -134,7 +157,7 @@ public class Challenge14 {
     }
 
     protected long scoreMap(final Map<String, Long> map) {
-        debugPairs("scoreMap", map);
+        this.debugPairs("scoreMap", map);
         long min = Long.MAX_VALUE;
         String minChar = "";
         long max = 0;
@@ -152,18 +175,26 @@ public class Challenge14 {
         return map.get(maxChar) - map.get(minChar);
     }
 
-    private long scorePolymer(final Map<String, Long> pairs, String template) {
-        // it breaks down here. I have pairs, and I know how many of each pair I have
-        // but the pairs overlap. So if I have a string ABC and my pairs are AB and BC, I cannot count B twice.
-        // which is why I'm getting about double the result.
-        // but I know the first and last letters. I should halve every count, and then add 1 to each of those.
+    private long measurePolymer(final Map<String, Long> pairs, final String template) {
+        final Map<String, Long> map = this.buildCountMap(pairs);
+        return this.measureMap(map, template);
+    }
+
+    private Map<String, Long> buildCountMap(final Map<String, Long> pairs) {
         final Map<String, Long> map = new HashMap<>();
         for (final Map.Entry<String, Long> entry : pairs.entrySet()) {
+            // this is over-counting ... each side of the pair will be used in another pair,
+            // except for the first and last letters in the string
             String element = entry.getKey().charAt(0) + "";
             map.put(element, map.getOrDefault(element, 0L) + entry.getValue());
             element = entry.getKey().charAt(1) + "";
             map.put(element, map.getOrDefault(element, 0L) + entry.getValue());
         }
+        return map;
+    }
+
+    private long scorePolymer(final Map<String, Long> pairs, final String template) {
+        final Map<String, Long> map = this.buildCountMap(pairs);
         return this.scoreMap(map, template);
     }
 
@@ -176,7 +207,6 @@ public class Challenge14 {
                     final Insertion newInsertion = insertion.copy();
                     newInsertion.indexInTemplate = i + 1;
                     insertionsToApply.add(newInsertion);
-//                    System.out.println("I will apply " + newInsertion.add + " between " + newInsertion.insertion + " at " + newInsertion.indexInTemplate);
                 }
             }
         }
@@ -187,7 +217,6 @@ public class Challenge14 {
         for (final Insertion insertion : insertionsToApply) {
             if (insertion.indexInTemplate >= i) {
                 insertion.indexInTemplate++;
-//                System.out.println("I have changed " + insertion.add + " between " + insertion.insertion + " to now be " + insertion.indexInTemplate);
             }
         }
     }
@@ -195,8 +224,7 @@ public class Challenge14 {
     private String actuallyApplyInsertions(final String current, final List<Insertion> insertionsToApply) {
         String inserted = current;
         for (final Insertion insertion : insertionsToApply) {
-//            System.out.println("I am inserting " + insertion.add + " between " + insertion.insertion + " at " + insertion.indexInTemplate);
-            inserted = inserted.substring(0, insertion.indexInTemplate) + insertion.add + inserted.substring(insertion.indexInTemplate);
+            inserted = inserted.substring(0, insertion.indexInTemplate) + insertion.charToInsert + inserted.substring(insertion.indexInTemplate);
             this.updateRemainingInsertionsIfLater(insertionsToApply, insertion.indexInTemplate);
         }
         return inserted;
@@ -222,7 +250,7 @@ public class Challenge14 {
         String left;
         String right;
         String pattern;
-        String add;
+        String charToInsert;
         String insertion;
         int indexInTemplate;
         boolean apply;
@@ -233,7 +261,7 @@ public class Challenge14 {
             this.pattern = parts[0];
             this.left = this.pattern.charAt(0) + "";
             this.right = this.pattern.charAt(1) + "";
-            this.add = parts[1];
+            this.charToInsert = parts[1];
             this.indexInTemplate = 0;
             this.apply = false;
         }
@@ -243,4 +271,3 @@ public class Challenge14 {
         }
     }
 }
-
