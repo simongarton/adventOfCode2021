@@ -34,7 +34,6 @@ public class Challenge11 {
         long result = 0;
         for (int step = 0; step < 100; step ++) {
             result += this.doOneStep();
-            System.out.println(step + 1 + ":" + result);
         }
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_1,
@@ -50,7 +49,6 @@ public class Challenge11 {
                 this.octopi[(row * this.width) + col]++;
             }
         }
-        this.printOctopi(-2);
         return this.nines();
     }
 
@@ -93,7 +91,6 @@ public class Challenge11 {
             for (int row = 0; row < this.height; row++) {
                 for (int col = 0; col < this.width; col++) {
                     if (this.octopi[(row * this.width) + col] == 0) {
-                        System.out.println("skipping zero " + row + "," + col);
                         continue;
                     }
                     if (this.octopi[(row * this.width) + col] > 9) {
@@ -108,7 +105,6 @@ public class Challenge11 {
                 final String[] parts = excited.split(",");
                 final int row = Integer.parseInt(parts[0]);
                 final int col = Integer.parseInt(parts[1]);
-                System.out.println("flashing " + row + "," + col);
                 flashes++;
                 this.octopi[(row * this.width) + col] = 0;
                 this.boost(row + 1, col + 1);
@@ -121,7 +117,6 @@ public class Challenge11 {
                 this.boost(row - 1, col - 1);
             }
         }
-        this.printOctopi(-1);
         return flashes;
     }
 
@@ -135,7 +130,6 @@ public class Challenge11 {
         if (this.octopi[(row * this.width) + col] == 0) {
             return;
         }
-        System.out.println("boosting " + row + "," + col + " from " + this.octopi[(row * this.width) + col] + " to " + (this.octopi[(row * this.width) + col] + 1));
         this.octopi[(row * this.width) + col] = this.octopi[(row * this.width) + col] + 1;
     }
 

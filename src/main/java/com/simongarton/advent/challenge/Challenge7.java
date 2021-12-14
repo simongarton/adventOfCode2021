@@ -46,7 +46,7 @@ public class Challenge7 {
                 bestPosition = i;
             }
         }
-        this.debugCosts(options, minimum, bestPosition);
+        //this.debugCosts(options, minimum, bestPosition);
         return minimum;
     }
 
@@ -63,7 +63,7 @@ public class Challenge7 {
                 bestPosition = i;
             }
         }
-        this.debugCosts(options, minimum, bestPosition);
+        //this.debugCosts(options, minimum, bestPosition);
         return minimum;
     }
 
@@ -126,7 +126,7 @@ public class Challenge7 {
             crabBuckets.add(new CrabBucket(entry.getKey(), entry.getValue()));
         }
         Collections.sort(crabBuckets, Comparator.comparing(CrabBucket::getDistance));
-        this.debugCrabBuckets(crabBuckets);
+//        this.debugCrabBuckets(crabBuckets);
         return crabBuckets;
     }
 

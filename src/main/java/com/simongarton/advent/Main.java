@@ -25,7 +25,9 @@ public class Main {
 //        this.day8();
 //        this.day10();
 //        this.day11();
-        this.day12();
+//        this.day12();
+        this.day13();
+
     }
 
     private void day1() throws IOException {
@@ -83,4 +85,8 @@ public class Main {
         new Challenge12().run(lines);
     }
 
+    private void day13() throws IOException {
+        final String[] lines = Files.readAllLines(Paths.get("data/day13.txt")).toArray(new String[0]);
+        new Challenge13().run(lines);
+    }
 }
