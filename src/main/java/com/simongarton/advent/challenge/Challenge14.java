@@ -25,16 +25,15 @@ public class Challenge14 {
     public Challenge14() {
     }
 
-    private long part1(final String[] lines) {
+    protected long part1(final String[] lines) {
         final long start = System.currentTimeMillis();
         final String template = lines[0];
         this.insertions = new ArrayList<>();
         this.loadInsertions(lines);
         String current = template;
-//        System.out.println(0 + " : " + current);
-        for (int step = 1; step <= 40; step++) {
+        for (int step = 1; step <= 10; step++) {
             current = this.applyInsertions(current);
-            System.out.println(step + " : " + current.length());
+            System.out.println(step + " l " + current.length() + " s " + this.scorePolymer(current) + " c " + current);
         }
         final long result = this.scorePolymer(current);
         this.logger.info(String.format("%s answer %d complete in %d ms",
@@ -44,17 +43,84 @@ public class Challenge14 {
         return result;
     }
 
+    protected long part2(final String[] lines) {
+        final long start = System.currentTimeMillis();
+        final String template = lines[0];
+        this.loadInsertions(lines);
+        Map<String, Long> pairs = this.buildPairs(template);
+        debugPairs("pairs at start",pairs);
+        for (int step = 1; step <= 40; step++) {
+            pairs = this.applyInsertions(pairs);
+            debugPairs("pairs",pairs);
+            System.out.println(step + " s " + this.scorePolymer(pairs, template));
+        }
+        final long result = this.scorePolymer(pairs, template);
+        this.logger.info(String.format("%s answer %d complete in %d ms",
+                TITLE_2,
+                result,
+                System.currentTimeMillis() - start));
+        return result;
+    }
+
+    private void debugPairs(String s, Map<String, Long> pairs) {
+        String line = "";
+        for (final Map.Entry<String, Long> entry : pairs.entrySet()) {
+            line += entry.getKey() + "=" + entry.getValue() + ", ";
+        }
+        System.out.println(s + " " + line);
+    }
+
+    protected Map<String, Long> applyInsertions(final Map<String, Long> pairs) {
+        final Map<String, Long> newPairs = new HashMap<>();
+        for (final Map.Entry<String, Long> entry : pairs.entrySet()) {
+            newPairs.put(entry.getKey(), entry.getValue());
+        }
+        for (final Insertion insertion : this.insertions) {
+            if (pairs.containsKey(insertion.pattern)) {
+                // decrement the existing pair by how many we have of these.
+                newPairs.put(insertion.pattern, newPairs.get(insertion.pattern) - pairs.get(insertion.pattern));
+                // figure out the new ones
+                final String new1 = insertion.left + insertion.add;
+                final String new2 = insertion.add + insertion.right;
+                newPairs.put(new1, newPairs.getOrDefault(new1, 0L) + pairs.get(insertion.pattern));
+                newPairs.put(new2, newPairs.getOrDefault(new2, 0L) + pairs.get(insertion.pattern));
+            }
+        }
+        final Map<String, Long> positivePairs = new HashMap<>();
+        for (final Map.Entry<String, Long> entry : newPairs.entrySet()) {
+            if (entry.getValue() > 0) {
+                positivePairs.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return positivePairs;
+    }
+
     private long scorePolymer(final String current) {
-        final Map<String, Integer> map = new HashMap<>();
+        final Map<String, Long> map = new HashMap<>();
         for (int i = 0; i < current.length(); i++) {
             final String element = current.charAt(i) + "";
-            map.put(element, map.getOrDefault(element, 0) + 1);
+            map.put(element, map.getOrDefault(element, 0L) + 1);
         }
-        int min = Integer.MAX_VALUE;
+        return this.scoreMap(map);
+    }
+
+    protected long scoreMap(final Map<String, Long> map, String template) {
+        debugPairs("scoreMapTemplate", map);
+        // now halve them all
+        for (final Map.Entry<String, Long> entry : map.entrySet()) {
+            map.put(entry.getKey(), entry.getValue()/2);
+        }
+        // and unhalf the first and last
+        String first = template.substring(0, 1);
+        map.put(first, map.get(first) + 1);
+        String last = template.substring(template.length()-1, template.length());
+        map.put(last, map.get(last) + 1);
+        debugPairs("scoreMapTemplate2", map);
+        long min = Long.MAX_VALUE;
         String minChar = "";
-        int max = 0;
+        long max = 0;
         String maxChar = "";
-        for (final Map.Entry<String, Integer> entry : map.entrySet()) {
+        for (final Map.Entry<String, Long> entry : map.entrySet()) {
             if (entry.getValue() < min) {
                 min = entry.getValue();
                 minChar = entry.getKey();
@@ -65,6 +131,40 @@ public class Challenge14 {
             }
         }
         return map.get(maxChar) - map.get(minChar);
+    }
+
+    protected long scoreMap(final Map<String, Long> map) {
+        debugPairs("scoreMap", map);
+        long min = Long.MAX_VALUE;
+        String minChar = "";
+        long max = 0;
+        String maxChar = "";
+        for (final Map.Entry<String, Long> entry : map.entrySet()) {
+            if (entry.getValue() < min) {
+                min = entry.getValue();
+                minChar = entry.getKey();
+            }
+            if (entry.getValue() > max) {
+                max = entry.getValue();
+                maxChar = entry.getKey();
+            }
+        }
+        return map.get(maxChar) - map.get(minChar);
+    }
+
+    private long scorePolymer(final Map<String, Long> pairs, String template) {
+        // it breaks down here. I have pairs, and I know how many of each pair I have
+        // but the pairs overlap. So if I have a string ABC and my pairs are AB and BC, I cannot count B twice.
+        // which is why I'm getting about double the result.
+        // but I know the first and last letters. I should halve every count, and then add 1 to each of those.
+        final Map<String, Long> map = new HashMap<>();
+        for (final Map.Entry<String, Long> entry : pairs.entrySet()) {
+            String element = entry.getKey().charAt(0) + "";
+            map.put(element, map.getOrDefault(element, 0L) + entry.getValue());
+            element = entry.getKey().charAt(1) + "";
+            map.put(element, map.getOrDefault(element, 0L) + entry.getValue());
+        }
+        return this.scoreMap(map, template);
     }
 
     private String applyInsertions(final String current) {
@@ -83,7 +183,7 @@ public class Challenge14 {
         return this.actuallyApplyInsertions(current, insertionsToApply);
     }
 
-    private void updateRemainingInsertionsIfLater(List<Insertion> insertionsToApply, int i) {
+    private void updateRemainingInsertionsIfLater(final List<Insertion> insertionsToApply, final int i) {
         for (final Insertion insertion : insertionsToApply) {
             if (insertion.indexInTemplate >= i) {
                 insertion.indexInTemplate++;
@@ -97,25 +197,25 @@ public class Challenge14 {
         for (final Insertion insertion : insertionsToApply) {
 //            System.out.println("I am inserting " + insertion.add + " between " + insertion.insertion + " at " + insertion.indexInTemplate);
             inserted = inserted.substring(0, insertion.indexInTemplate) + insertion.add + inserted.substring(insertion.indexInTemplate);
-            updateRemainingInsertionsIfLater(insertionsToApply, insertion.indexInTemplate);
+            this.updateRemainingInsertionsIfLater(insertionsToApply, insertion.indexInTemplate);
         }
         return inserted;
     }
 
-    private void loadInsertions(final String[] lines) {
+    protected void loadInsertions(final String[] lines) {
+        this.insertions = new ArrayList<>();
         for (int index = 2; index < lines.length; index++) {
             this.insertions.add(new Insertion(lines[index]));
         }
     }
 
-    private long part2(final String[] lines) {
-        final long start = System.currentTimeMillis();
-        final long result = 0;
-        this.logger.info(String.format("%s answer %d complete in %d ms",
-                TITLE_2,
-                result,
-                System.currentTimeMillis() - start));
-        return result;
+    protected Map<String, Long> buildPairs(final String template) {
+        final Map<String, Long> pairs = new HashMap<>();
+        for (int i = 0; i < template.length() - 1; i++) {
+            final String key = template.substring(i, i + 2);
+            pairs.put(key, pairs.getOrDefault(key, 0L) + 1);
+        }
+        return pairs;
     }
 
     public static final class Insertion {
