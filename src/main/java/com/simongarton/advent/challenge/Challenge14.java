@@ -23,9 +23,6 @@ public class Challenge14 {
         this.part2(lines);
     }
 
-    public Challenge14() {
-    }
-
     protected long part1(final String[] lines) {
         final long start = System.currentTimeMillis();
         final String template = lines[0];
@@ -115,45 +112,15 @@ public class Challenge14 {
         return this.scoreMap(map);
     }
 
-    protected long measureMap(final Map<String, Long> map, final String template) {
+    protected long scoreMapAfterCorrectingForDuplicates(final Map<String, Long> map, final String template) {
         // now halve them all
-        for (final Map.Entry<String, Long> entry : map.entrySet()) {
-            map.put(entry.getKey(), entry.getValue() / 2);
-        }
+        map.replaceAll((k, v) -> v / 2);
         // and unhalve the first and last because they AREN'T duplicated
         final String first = template.substring(0, 1);
         map.put(first, map.get(first) + 1);
-        final String last = template.substring(template.length() - 1, template.length());
+        final String last = template.substring(template.length() - 1);
         map.put(last, map.get(last) + 1);
-        return map.values().stream().mapToLong(Long::longValue).sum();
-    }
-
-    protected long scoreMap(final Map<String, Long> map, final String template) {
-        // now halve them all
-        for (final Map.Entry<String, Long> entry : map.entrySet()) {
-            map.put(entry.getKey(), entry.getValue() / 2);
-        }
-        // and unhalve the first and last because they AREN'T duplicated
-        final String first = template.substring(0, 1);
-        map.put(first, map.get(first) + 1);
-        final String last = template.substring(template.length() - 1, template.length());
-        map.put(last, map.get(last) + 1);
-        this.debugPairs("scoreMap", map);
-        long min = Long.MAX_VALUE;
-        String minChar = "";
-        long max = 0;
-        String maxChar = "";
-        for (final Map.Entry<String, Long> entry : map.entrySet()) {
-            if (entry.getValue() < min) {
-                min = entry.getValue();
-                minChar = entry.getKey();
-            }
-            if (entry.getValue() > max) {
-                max = entry.getValue();
-                maxChar = entry.getKey();
-            }
-        }
-        return map.get(maxChar) - map.get(minChar);
+        return this.scoreMap(map);
     }
 
     protected long scoreMap(final Map<String, Long> map) {
@@ -175,11 +142,6 @@ public class Challenge14 {
         return map.get(maxChar) - map.get(minChar);
     }
 
-    private long measurePolymer(final Map<String, Long> pairs, final String template) {
-        final Map<String, Long> map = this.buildCountMap(pairs);
-        return this.measureMap(map, template);
-    }
-
     private Map<String, Long> buildCountMap(final Map<String, Long> pairs) {
         final Map<String, Long> map = new HashMap<>();
         for (final Map.Entry<String, Long> entry : pairs.entrySet()) {
@@ -195,7 +157,7 @@ public class Challenge14 {
 
     private long scorePolymer(final Map<String, Long> pairs, final String template) {
         final Map<String, Long> map = this.buildCountMap(pairs);
-        return this.scoreMap(map, template);
+        return this.scoreMapAfterCorrectingForDuplicates(map, template);
     }
 
     private String applyInsertions(final String current) {
@@ -247,13 +209,12 @@ public class Challenge14 {
     }
 
     public static final class Insertion {
-        String left;
-        String right;
-        String pattern;
-        String charToInsert;
-        String insertion;
+        final String left;
+        final String right;
+        final String pattern;
+        final String charToInsert;
+        final String insertion;
         int indexInTemplate;
-        boolean apply;
 
         public Insertion(final String insertion) {
             this.insertion = insertion;
@@ -263,7 +224,6 @@ public class Challenge14 {
             this.right = this.pattern.charAt(1) + "";
             this.charToInsert = parts[1];
             this.indexInTemplate = 0;
-            this.apply = false;
         }
 
         public Insertion copy() {
