@@ -46,19 +46,29 @@ public class Challenge15 {
     }
 
     private List<Chiton> aStar(final Chiton startChiton, final Chiton endChiton) {
+
+        // I don't think this is right.
+        // I adapted the algorithm from Wikipedia
+        // https://en.wikipedia.org/wiki/A*_search_algorithm
+        // but either I haven't done it right, or it's wrong.
+        // I never try and pick the best node towards the end with costToGetToEnd()
+        // and in their example, fScore is never used.
+
+        // I think I'm just blundering around, and so my performance could be faster.
+
+        // review https://stackabuse.com/graphs-in-java-a-star-algorithm/ and
+        // https://www.baeldung.com/java-a-star-pathfinding
+
         final List<Chiton> openSet = new ArrayList<>();
         openSet.add(startChiton);
 
         final Map<Chiton, Chiton> cameFrom = new HashMap<>();
-        final Map<Chiton, Long> gScore = new HashMap<>();
-        final Map<Chiton, Long> fScore = new HashMap<>();
+        final Map<Chiton, Long> costMap = new HashMap<>();
         for (final Chiton c : this.chitons) {
-            gScore.put(c, Long.MAX_VALUE);
-            fScore.put(c, Long.MAX_VALUE);
+            costMap.put(c, Long.MAX_VALUE);
         }
 
-        gScore.put(startChiton, 0L);
-        fScore.put(startChiton, this.costToGetToEnd(startChiton));
+        costMap.put(startChiton, 0L);
 
         while (!openSet.isEmpty()) {
             openSet.sort(Comparator.comparing(s -> s.score));
@@ -67,21 +77,16 @@ public class Challenge15 {
                 return this.buildPath(cameFrom, current);
             }
             openSet.remove(0);
-//            System.out.println("looking at " + current + " with " + openSet.size() + " left ...");
             final List<Chiton> neighbours = this.getNeighbours(current);
             for (final Chiton neighbour : neighbours) {
-//                System.out.println("  looking at " + neighbour + " gScore.get(current) " + gScore.get(current) + " neighbour.value " + neighbour.value + " ...");
-                // I don't think this is right, but it worked on sample.
-                final long tentativeGscore = gScore.get(current) + neighbour.value;
-                if (tentativeGscore < gScore.get(neighbour)) {
-//                    System.out.println("    setting camefrom for " + neighbour + " to " + cameFrom);
+                final long tentativeGscore = costMap.get(current) + neighbour.value;
+                if (tentativeGscore < costMap.get(neighbour)) {
                     cameFrom.put(neighbour, current);
-//                    System.out.println("    setting gScore for " + neighbour + " to " + tentativeGscore);
-                    gScore.put(neighbour, tentativeGscore);
-//                    System.out.println("    setting neighbour.score to " + tentativeGscore);
+                    costMap.put(neighbour, tentativeGscore);
+                    // this seems wrong, but is faster : 4s, not 6s
                     neighbour.score = tentativeGscore;
-//                    System.out.println("    setting fScore for " + neighbour + " to " + this.costToGetToEnd(neighbour));
-                    fScore.put(neighbour, tentativeGscore + this.costToGetToEnd(neighbour));
+                    // this ... might ? ... be the right way
+                    // neighbour.score = tentativeGscore + costToGetToEnd(neighbour);
                     if (!openSet.contains(neighbour)) {
                         openSet.add(neighbour);
                     }
