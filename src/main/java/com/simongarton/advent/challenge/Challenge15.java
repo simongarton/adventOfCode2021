@@ -1,7 +1,5 @@
 package com.simongarton.advent.challenge;
 
-import lombok.Getter;
-import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,8 +9,8 @@ public class Challenge15 {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
-    private static final String TITLE_1 = "Extended Polymerization 1";
-    private static final String TITLE_2 = "Extended Polymerization 2";
+    private static final String TITLE_1 = "Chiton 1";
+    private static final String TITLE_2 = "Chiton 2";
 
     private List<Chiton> chitons;
     private int width;
@@ -30,7 +28,7 @@ public class Challenge15 {
         this.width = lines[0].length();
         this.height = lines.length;
         this.loadChitons(lines);
-        this.printChitons();
+//        this.printChitons();
         this.startChiton = this.chitons.get(0);
         this.endChiton = this.chitons.get(-1 + this.width * this.height);
         final List<Chiton> path = this.aStar(this.startChiton, this.endChiton);
@@ -43,8 +41,8 @@ public class Challenge15 {
     }
 
     private long score(final List<Chiton> path) {
-        path.stream().forEach(c -> System.out.println(c + "=" + c.value));
-        return path.stream().map(c -> c.value).mapToLong(Long::new).sum() - startChiton.value;
+        // path.forEach(c -> System.out.println(c + "=" + c.value));
+        return path.stream().map(c -> c.value).mapToLong(Long::valueOf).sum() - this.startChiton.value;
     }
 
     private List<Chiton> aStar(final Chiton startChiton, final Chiton endChiton) {
@@ -69,12 +67,12 @@ public class Challenge15 {
                 return this.buildPath(cameFrom, current);
             }
             openSet.remove(0);
-            System.out.println("looking at " + current + " with " + openSet.size() + " left ...");
+//            System.out.println("looking at " + current + " with " + openSet.size() + " left ...");
             final List<Chiton> neighbours = this.getNeighbours(current);
             for (final Chiton neighbour : neighbours) {
 //                System.out.println("  looking at " + neighbour + " gScore.get(current) " + gScore.get(current) + " neighbour.value " + neighbour.value + " ...");
                 // I don't think this is right, but it worked on sample.
-                final Long tentativeGscore = gScore.get(current) + neighbour.value;
+                final long tentativeGscore = gScore.get(current) + neighbour.value;
                 if (tentativeGscore < gScore.get(neighbour)) {
 //                    System.out.println("    setting camefrom for " + neighbour + " to " + cameFrom);
                     cameFrom.put(neighbour, current);
@@ -135,11 +133,38 @@ public class Challenge15 {
         for (final String line : lines) {
             for (int col = 0; col < this.width; col++) {
                 final Chiton chiton = new Chiton(col, row);
-                chiton.setValue(Integer.parseInt(line.charAt(col) + ""));
+                chiton.value = Integer.parseInt(line.charAt(col) + "");
                 this.chitons.add(chiton);
             }
             row++;
         }
+    }
+
+    private void expandChitons() {
+        final List<Chiton> gridChitons = new ArrayList<>();
+        final int expandedWidth = this.width * 5;
+        final int expandedHeight = this.height * 5;
+        for (int row = 0; row < expandedHeight; row++) {
+            for (int col = 0; col < expandedWidth; col++) {
+                final int tileX = col / this.width;
+                final int tileY = row / this.height;
+                final int originalCol = col % this.width;
+                final int originalRow = row % this.height;
+                final Chiton chiton = this.chitons.get((originalRow * this.width) + originalCol);
+                final Chiton gridChiton = new Chiton(col, row);
+                gridChiton.value = this.scale91(chiton.value, tileX, tileY);
+                gridChitons.add(gridChiton);
+            }
+        }
+        this.chitons.clear();
+        this.chitons.addAll(gridChitons);
+        this.width = expandedWidth;
+        this.height = expandedHeight;
+    }
+
+    private int scale91(final int value, final int tileX, final int tileY) {
+        final int newValue = value + tileX + tileY - 1;
+        return (newValue % 9) + 1;
     }
 
     private void printChitons() {
@@ -151,12 +176,20 @@ public class Challenge15 {
             }
             System.out.println(line);
         }
-        System.out.println("");
+        System.out.println();
     }
 
     protected long part2(final String[] lines) {
         final long start = System.currentTimeMillis();
-        final long result = 0;
+        this.width = lines[0].length();
+        this.height = lines.length;
+        this.loadChitons(lines);
+        this.expandChitons();
+//        this.printChitons();
+        this.startChiton = this.chitons.get(0);
+        this.endChiton = this.chitons.get(-1 + (this.width) * (this.height));
+        final List<Chiton> path = this.aStar(this.startChiton, this.endChiton);
+        final long result = this.score(path);
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_2,
                 result,
@@ -164,11 +197,9 @@ public class Challenge15 {
         return result;
     }
 
-    @Getter
-    @Setter
     private static final class Chiton {
-        int x;
-        int y;
+        final int x;
+        final int y;
         int value;
         long score;
 
@@ -197,10 +228,6 @@ public class Challenge15 {
         @Override
         public int hashCode() {
             return Objects.hash(this.x, this.y);
-        }
-
-        public boolean isSameAs(final Chiton other) {
-            return (this.x == other.x) && (this.y == other.y);
         }
     }
 }
