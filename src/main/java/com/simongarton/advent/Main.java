@@ -28,7 +28,8 @@ public class Main {
 //        this.day12();
 //        this.day13();
 //        this.day14();
-        this.day15();
+//        this.day15();
+        this.day16();
 
     }
 
@@ -100,5 +101,25 @@ public class Main {
     private void day15() throws IOException {
         final String[] lines = Files.readAllLines(Paths.get("data/day15.txt")).toArray(new String[0]);
         new Challenge15().run(lines);
+    }
+
+    private void day16() throws IOException {
+        final String[] lines = Files.readAllLines(Paths.get("data/day16-sample.txt")).toArray(new String[0]);
+        new Challenge16().run(lines);
+    }
+
+    private void day17() throws IOException {
+        final String[] lines = Files.readAllLines(Paths.get("data/day17-sample.txt")).toArray(new String[0]);
+        new Challenge17().run(lines);
+    }
+
+    private void day18() throws IOException {
+        final String[] lines = Files.readAllLines(Paths.get("data/day18-sample.txt")).toArray(new String[0]);
+        new Challenge18().run(lines);
+    }
+
+    private void day19() throws IOException {
+        final String[] lines = Files.readAllLines(Paths.get("data/day19-sample.txt")).toArray(new String[0]);
+        new Challenge19().run(lines);
     }
 }
