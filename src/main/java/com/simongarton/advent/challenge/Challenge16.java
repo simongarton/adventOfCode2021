@@ -13,22 +13,12 @@ public class Challenge16 {
 
     private static final String TITLE_1 = "Packet Decoder 1";
     private static final String TITLE_2 = "Packet Decoder 2";
-    private static final boolean DEBUG = true;
-    private final Map<String, String> binaryTable = new HashMap();
+    private final Map<String, String> binaryTable = new HashMap<>();
 
     public void run(final String[] lines) {
         this.buildBinaryTable();
         this.part1(lines);
         this.part2(lines);
-    }
-
-    public void debug(final String[] lines) {
-        this.buildBinaryTable();
-        for (final String hex : lines) {
-            final String binary = this.readPaddedBinaryFromHex(hex);
-            final Packet packet = new Packet(binary, 0);
-            System.out.println("versionSum " + packet.versionSum());
-        }
     }
 
     private String readPaddedBinaryFromHex(final String hex) {
@@ -49,10 +39,6 @@ public class Challenge16 {
         }
     }
 
-    private String padTo(final String s, final int size) {
-        return this.padTo(s, size, " ");
-    }
-
     private String padTo(final String s, final int size, final String replacement) {
         if (s.length() > size) {
             return new String(new char[size]).replace("\0", "*");
@@ -64,7 +50,7 @@ public class Challenge16 {
         final long start = System.currentTimeMillis();
         final String hex = lines[0];
         final String binary = this.readPaddedBinaryFromHex(hex);
-        final Packet packet = new Packet(binary, 0);
+        final Packet packet = new Packet(binary);
         final long result = packet.versionSum();
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_1,
@@ -77,7 +63,7 @@ public class Challenge16 {
         final long start = System.currentTimeMillis();
         final String hex = lines[0];
         final String binary = this.readPaddedBinaryFromHex(hex);
-        final Packet packet = new Packet(binary, 0);
+        final Packet packet = new Packet(binary);
         final long result = packet.calculation();
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_2,
@@ -96,7 +82,7 @@ public class Challenge16 {
         LESSER(6),
         EQUAL(7);
 
-        int typeId;
+        final int typeId;
 
         PacketType(final int typeId) {
             this.typeId = typeId;
@@ -107,25 +93,19 @@ public class Challenge16 {
         }
     }
 
-    public final class Packet {
+    public static final class Packet {
 
-        private final String originalBinary;
         private int bitsRead;
         private final Header header;
         private final PacketType packetType;
         private Long literalValue;
         private List<Packet> subPackets;
 
-        public Packet(final String originalBinary, final int index) {
-            this.log("", "");
-            this.originalBinary = originalBinary;
-            this.log("originalBinary ", originalBinary);
+        public Packet(final String originalBinary) {
             this.header = new Header(originalBinary.substring(0, 6));
             this.bitsRead += 6;
             this.packetType = this.figurePacketType(this.header);
-            this.log("header ", this.header.version + ":" + this.header.typeId + " = " + this.packetType);
-            this.bitsRead += this.buildPacket(this.originalBinary.substring(6));
-            this.log("Packet", this.toString());
+            this.bitsRead += this.buildPacket(originalBinary.substring(6));
         }
 
         @Override
@@ -137,19 +117,11 @@ public class Challenge16 {
             }
         }
 
-        private void log(final String caption, final String value) {
-            if (DEBUG) {
-                System.out.println(Challenge16.this.padTo(caption, 20) + " : " + value);
-            }
-        }
-
         private int buildPacket(final String binary) {
-            switch (this.packetType) {
-                case LITERAL_VALUE:
-                    return this.buildPacketFromLiteralValue(binary);
-                default:
-                    return this.buildPacketFromOperator(binary);
+            if (this.packetType == PacketType.LITERAL_VALUE) {
+                return this.buildPacketFromLiteralValue(binary);
             }
+            return this.buildPacketFromOperator(binary);
         }
 
         private int buildPacketFromOperator(final String binary) {
@@ -166,17 +138,14 @@ public class Challenge16 {
         }
 
         private int readOperatorPacketsFromCount(final String substring) {
-            this.log("countSubstring", substring);
             int bitsReadForOperatorLength = 0;
             final int subPacketsCount = Integer.parseInt(substring.substring(0, 11), 2);
-            this.log("countSubPackets", subPacketsCount + "");
             bitsReadForOperatorLength += 11;
             this.subPackets = new ArrayList<>();
             int subPacketsBitsRead = 0;
             while (this.subPackets.size() < subPacketsCount) {
                 final String subsubString = substring.substring(11 + subPacketsBitsRead);
-                this.log("index", this.subPackets.size() + " " + subsubString);
-                final Packet packet = new Packet(subsubString, 0);
+                final Packet packet = new Packet(subsubString);
                 this.subPackets.add(packet);
                 subPacketsBitsRead += packet.bitsRead;
             }
@@ -190,7 +159,7 @@ public class Challenge16 {
             int subPacketsBitsRead = 0;
             this.subPackets = new ArrayList<>();
             while (subPacketsBitsRead < subPacketsBitLength) {
-                final Packet packet = new Packet(substring.substring(15 + subPacketsBitsRead), 0);
+                final Packet packet = new Packet(substring.substring(15 + subPacketsBitsRead));
                 this.subPackets.add(packet);
                 subPacketsBitsRead += packet.bitsRead;
             }
@@ -210,9 +179,7 @@ public class Challenge16 {
                 }
             }
             final String binaryString = numbers.stream().map(n -> n.value).collect(Collectors.joining());
-            this.log("binaryString ", binaryString);
             this.literalValue = Long.parseLong(binaryString, 2);
-            this.log("literalValue ", this.literalValue + "");
             return bitsReadForLiteralValue;
         }
 
@@ -245,10 +212,16 @@ public class Challenge16 {
                     }
                     return product;
                 case MIN:
-                    final List<Long> minValues = this.subPackets.stream().map(Packet::calculation).sorted(Comparator.naturalOrder()).collect(Collectors.toList());
+                    final List<Long> minValues = this.subPackets.stream()
+                            .map(Packet::calculation)
+                            .sorted(Comparator.naturalOrder())
+                            .collect(Collectors.toList());
                     return minValues.get(0);
                 case MAX:
-                    final List<Long> maxValues = this.subPackets.stream().map(Packet::calculation).sorted(Comparator.reverseOrder()).collect(Collectors.toList());
+                    final List<Long> maxValues = this.subPackets.stream()
+                            .map(Packet::calculation)
+                            .sorted(Comparator.reverseOrder())
+                            .collect(Collectors.toList());
                     return maxValues.get(0);
                 case LITERAL_VALUE:
                     return this.literalValue;
@@ -265,14 +238,10 @@ public class Challenge16 {
 
         public final class Header {
 
-            private final String binary;
-
             private final int version;
             private final int typeId;
 
             public Header(final String binary) {
-                this.binary = binary;
-
                 final String versionString = binary.substring(0, 3);
                 final String typeIdString = binary.substring(3, 6);
                 this.version = Integer.parseInt(versionString, 2);
@@ -281,12 +250,10 @@ public class Challenge16 {
         }
 
         public final class FiveBitInteger {
-            private final String bits;
-            private boolean lastBit = false;
+            private final boolean lastBit;
             private final String value;
 
             public FiveBitInteger(final String bits) {
-                this.bits = bits;
                 this.lastBit = bits.charAt(0) == '0';
                 this.value = bits.substring(1, 5);
             }
