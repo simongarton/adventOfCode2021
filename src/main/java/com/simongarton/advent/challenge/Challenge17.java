@@ -10,6 +10,8 @@ public class Challenge17 {
     private static final String TITLE_1 = "Trick Shot 1";
     private static final String TITLE_2 = "Trick Shot 2";
 
+    private static final int COMPLETELY_ARBITRARY_MAX_NUMBER = 1000;
+
     public void run(final String[] lines) {
         this.part1(lines);
         this.part2(lines);
@@ -18,7 +20,7 @@ public class Challenge17 {
     protected long part1(final String[] lines) {
         final long start = System.currentTimeMillis();
         final TargetArea targetArea = new TargetArea(lines[0]);
-        final long result = highestY(targetArea);
+        final long result = this.highestY(targetArea);
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_1,
                 result,
@@ -26,17 +28,16 @@ public class Challenge17 {
         return result;
     }
 
-    private long highestY(TargetArea targetArea) {
+    private long highestY(final TargetArea targetArea) {
         long highestY = 0;
-        int max = 10000;
+        final int max = COMPLETELY_ARBITRARY_MAX_NUMBER;
         for (int deltaX = 0; deltaX < max; deltaX++) {
-            for (int deltaY = 0; deltaY < max; deltaY++) {
-                Probe probe = new Probe(deltaX, deltaY);
-                fireProbe(probe, targetArea);
+            for (int deltaY = -max; deltaY < max; deltaY++) {
+                final Probe probe = new Probe(deltaX, deltaY);
+                this.fireProbe(probe, targetArea);
                 if (targetArea.probeInside(probe.x, probe.y)) {
                     if (highestY < probe.highestY) {
                         highestY = probe.highestY;
-                        System.out.println(deltaX + "," + deltaY + " = hit after reaching " + highestY);
                     }
                 }
             }
@@ -44,7 +45,22 @@ public class Challenge17 {
         return highestY;
     }
 
-    private void fireProbe(Probe probe, TargetArea targetArea) {
+    private long totalOptions(final TargetArea targetArea) {
+        long totalOptions = 0;
+        final int max = COMPLETELY_ARBITRARY_MAX_NUMBER;
+        for (int deltaX = 0; deltaX < max; deltaX++) {
+            for (int deltaY = -max; deltaY < max; deltaY++) {
+                final Probe probe = new Probe(deltaX, deltaY);
+                this.fireProbe(probe, targetArea);
+                if (targetArea.probeInside(probe.x, probe.y)) {
+                    totalOptions++;
+                }
+            }
+        }
+        return totalOptions;
+    }
+
+    private void fireProbe(final Probe probe, final TargetArea targetArea) {
         while (true) {
             probe.move();
             if (targetArea.probeInside(probe.x, probe.y)) {
@@ -53,12 +69,16 @@ public class Challenge17 {
             if (targetArea.probeBelow(probe.x, probe.y)) {
                 break;
             }
+            if (targetArea.probeBeyond(probe.x, probe.y)) {
+                break;
+            }
         }
     }
 
     protected long part2(final String[] lines) {
         final long start = System.currentTimeMillis();
-        final long result = 0;
+        final TargetArea targetArea = new TargetArea(lines[0]);
+        final long result = this.totalOptions(targetArea);
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_2,
                 result,
@@ -95,8 +115,8 @@ public class Challenge17 {
             }
             this.deltaY -= 1;
             this.step++;
-            if (highestY < this.y) {
-                highestY = this.y;
+            if (this.highestY < this.y) {
+                this.highestY = this.y;
             }
         }
     }
