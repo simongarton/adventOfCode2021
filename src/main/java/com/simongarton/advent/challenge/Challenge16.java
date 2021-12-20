@@ -27,6 +27,7 @@ public class Challenge16 {
         for (final String hex : lines) {
             final String binary = readPaddedBinaryFromHex(hex);
             final Packet packet = new Packet(binary, 0);
+            System.out.println("versionSum " + packet.versionSum());
         }
     }
 
@@ -93,7 +94,7 @@ public class Challenge16 {
         private int bitsRead;
         private final Header header;
         private final PacketType packetType;
-        private Integer literalValue;
+        private Long literalValue;
         private List<Packet> subPackets;
 
         public Packet(final String originalBinary, final int index) {
@@ -147,13 +148,17 @@ public class Challenge16 {
         }
 
         private int readOperatorPacketsFromCount(final String substring) {
+            log("countSubstring",substring);
             int bitsReadForOperatorLength = 0;
             final int subPacketsCount = Integer.parseInt(substring.substring(0, 11), 2);
-            bitsReadForOperatorLength += 15;
-            final List<Packet> subPackets = new ArrayList<>();
+            log("countSubPackets",subPacketsCount + "");
+            bitsReadForOperatorLength += 11;
+            this.subPackets = new ArrayList<>();
             int subPacketsBitsRead = 0;
             while (subPackets.size() < subPacketsCount) {
-                final Packet packet = new Packet(substring.substring(15 + subPacketsBitsRead), 0);
+                String subsubString = substring.substring(11 + subPacketsBitsRead);
+                log("index",subPackets.size() + " " + subsubString);
+                final Packet packet = new Packet(subsubString, 0);
                 subPackets.add(packet);
                 subPacketsBitsRead += packet.bitsRead;
             }
@@ -186,9 +191,9 @@ public class Challenge16 {
                     break;
                 }
             }
-            final String hexString = numbers.stream().map(n -> n.value).collect(Collectors.joining());
-            this.log("hexString ", hexString);
-            this.literalValue = Integer.parseInt(hexString, 2);
+            final String binaryString = numbers.stream().map(n -> n.value).collect(Collectors.joining());
+            this.log("binaryString ", binaryString);
+            this.literalValue = Long.parseLong(binaryString, 2);
             this.log("literalValue ", this.literalValue + "");
             return bitsReadForLiteralValue;
         }
@@ -200,6 +205,16 @@ public class Challenge16 {
                 default:
                     return PacketType.OPERATOR;
             }
+        }
+
+        public int versionSum() {
+            int versionSum = this.header.version;
+            if (this.subPackets != null) {
+                for (Packet subPacket : this.subPackets) {
+                    versionSum += subPacket.versionSum();
+                }
+            }
+            return versionSum;
         }
 
         public final class Header {
