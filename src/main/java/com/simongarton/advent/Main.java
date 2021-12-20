@@ -105,7 +105,7 @@ public class Main {
 
     private void day16() throws IOException {
         final String[] lines = Files.readAllLines(Paths.get("data/day16-sample.txt")).toArray(new String[0]);
-        new Challenge16().run(lines);
+        new Challenge16().debug(lines);
     }
 
     private void day17() throws IOException {
