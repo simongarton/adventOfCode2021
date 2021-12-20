@@ -25,14 +25,14 @@ public class Challenge16 {
     public void debug(final String[] lines) {
         this.buildBinaryTable();
         for (final String hex : lines) {
-            final String binary = readPaddedBinaryFromHex(hex);
+            final String binary = this.readPaddedBinaryFromHex(hex);
             final Packet packet = new Packet(binary, 0);
             System.out.println("versionSum " + packet.versionSum());
         }
     }
 
     private String readPaddedBinaryFromHex(final String hex) {
-        StringBuilder paddedBinary = new StringBuilder();
+        final StringBuilder paddedBinary = new StringBuilder();
         for (int i = 0; i < hex.length(); i++) {
             final String c = hex.charAt(i) + "";
             paddedBinary.append(this.binaryTable.get(c));
@@ -62,10 +62,10 @@ public class Challenge16 {
 
     protected long part1(final String[] lines) {
         final long start = System.currentTimeMillis();
-        final long result = 0;
         final String hex = lines[0];
-        final String binary = readPaddedBinaryFromHex(hex);
+        final String binary = this.readPaddedBinaryFromHex(hex);
         final Packet packet = new Packet(binary, 0);
+        final long result = packet.versionSum();
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_1,
                 result,
@@ -75,7 +75,10 @@ public class Challenge16 {
 
     protected long part2(final String[] lines) {
         final long start = System.currentTimeMillis();
-        final long result = 0;
+        final String hex = lines[0];
+        final String binary = this.readPaddedBinaryFromHex(hex);
+        final Packet packet = new Packet(binary, 0);
+        final long result = packet.calculation();
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_2,
                 result,
@@ -84,8 +87,24 @@ public class Challenge16 {
     }
 
     public enum PacketType {
-        LITERAL_VALUE,
-        OPERATOR
+        SUM(0),
+        PRODUCT(1),
+        MIN(2),
+        MAX(3),
+        LITERAL_VALUE(4),
+        GREATER(5),
+        LESSER(6),
+        EQUAL(7);
+
+        int typeId;
+
+        PacketType(final int typeId) {
+            this.typeId = typeId;
+        }
+
+        public static PacketType from(final int typeId) {
+            return Arrays.stream(values()).filter(pt -> pt.typeId == typeId).findFirst().orElse(null);
+        }
     }
 
     public final class Packet {
@@ -128,7 +147,6 @@ public class Challenge16 {
             switch (this.packetType) {
                 case LITERAL_VALUE:
                     return this.buildPacketFromLiteralValue(binary);
-                case OPERATOR:
                 default:
                     return this.buildPacketFromOperator(binary);
             }
@@ -148,18 +166,18 @@ public class Challenge16 {
         }
 
         private int readOperatorPacketsFromCount(final String substring) {
-            log("countSubstring",substring);
+            this.log("countSubstring", substring);
             int bitsReadForOperatorLength = 0;
             final int subPacketsCount = Integer.parseInt(substring.substring(0, 11), 2);
-            log("countSubPackets",subPacketsCount + "");
+            this.log("countSubPackets", subPacketsCount + "");
             bitsReadForOperatorLength += 11;
             this.subPackets = new ArrayList<>();
             int subPacketsBitsRead = 0;
-            while (subPackets.size() < subPacketsCount) {
-                String subsubString = substring.substring(11 + subPacketsBitsRead);
-                log("index",subPackets.size() + " " + subsubString);
+            while (this.subPackets.size() < subPacketsCount) {
+                final String subsubString = substring.substring(11 + subPacketsBitsRead);
+                this.log("index", this.subPackets.size() + " " + subsubString);
                 final Packet packet = new Packet(subsubString, 0);
-                subPackets.add(packet);
+                this.subPackets.add(packet);
                 subPacketsBitsRead += packet.bitsRead;
             }
             return bitsReadForOperatorLength + subPacketsBitsRead;
@@ -199,22 +217,50 @@ public class Challenge16 {
         }
 
         private PacketType figurePacketType(final Header header) {
-            switch (header.typeId) {
-                case 4:
-                    return PacketType.LITERAL_VALUE;
-                default:
-                    return PacketType.OPERATOR;
-            }
+            return PacketType.from(header.typeId);
         }
 
         public int versionSum() {
             int versionSum = this.header.version;
             if (this.subPackets != null) {
-                for (Packet subPacket : this.subPackets) {
+                for (final Packet subPacket : this.subPackets) {
                     versionSum += subPacket.versionSum();
                 }
             }
             return versionSum;
+        }
+
+        public long calculation() {
+            switch (this.packetType) {
+                case SUM:
+                    long sum = 0;
+                    for (final Packet subPacket : this.subPackets) {
+                        sum += subPacket.calculation();
+                    }
+                    return sum;
+                case PRODUCT:
+                    long product = 1;
+                    for (final Packet subPacket : this.subPackets) {
+                        product = product * subPacket.calculation();
+                    }
+                    return product;
+                case MIN:
+                    final List<Long> minValues = this.subPackets.stream().map(Packet::calculation).sorted(Comparator.naturalOrder()).collect(Collectors.toList());
+                    return minValues.get(0);
+                case MAX:
+                    final List<Long> maxValues = this.subPackets.stream().map(Packet::calculation).sorted(Comparator.reverseOrder()).collect(Collectors.toList());
+                    return maxValues.get(0);
+                case LITERAL_VALUE:
+                    return this.literalValue;
+                case GREATER:
+                    return this.subPackets.get(0).calculation() > this.subPackets.get(1).calculation() ? 1 : 0;
+                case LESSER:
+                    return this.subPackets.get(0).calculation() < this.subPackets.get(1).calculation() ? 1 : 0;
+                case EQUAL:
+                    return this.subPackets.get(0).calculation() == this.subPackets.get(1).calculation() ? 1 : 0;
+                default:
+                    throw new RuntimeException("Nah");
+            }
         }
 
         public final class Header {
