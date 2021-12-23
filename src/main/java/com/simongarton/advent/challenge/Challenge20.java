@@ -14,6 +14,13 @@ public class Challenge20 {
     private static final String TITLE_2 = "Template 2";
 
 
+    /*
+
+    The sample works fine.
+
+    The actual image is "too high" but looking at the results, the top and bottom lines go solid ... which doesn't
+    feel right.
+     */
 
     private String algorithm;
 
@@ -29,11 +36,8 @@ public class Challenge20 {
         for (int i = 2; i < lines.length; i++) {
             image.add(lines[i]);
         }
-//        this.printImage(image);
         for (int round = 0; round < 2; round++) {
             image = this.expandImage(image);
-            this.printImage(image);
-//            this.debugPattern(image, 3, 3);
             image = this.processImage(image);
             this.printImage(image);
         }
@@ -59,7 +63,6 @@ public class Challenge20 {
         final List<String> processed = new ArrayList<>();
         final String blankLine = new String(new char[width]).replace("\0", ".");
         processed.add(blankLine);
-        System.out.println("started " + processed.get(processed.size() - 1));
 
         for (int row = 1; row < height - 1; row++) {
             String newLine = ".";
@@ -68,11 +71,10 @@ public class Challenge20 {
                 final String binary = this.patternToBinary(pattern);
                 final int encoded = Integer.parseInt(binary, 2);
                 final String enhanced = this.algorithm.charAt(encoded) + "";
-                System.out.println(row + "," + col + " : " + encoded + " = " + enhanced + " for " + pattern + " (" + binary + ")");
+//                System.out.println(row + "," + col + " : " + encoded + " = " + enhanced + " for " + pattern + " (" + binary + ")");
                 newLine += enhanced;
             }
             processed.add(newLine + ".");
-            System.out.println("added " + processed.get(processed.size() - 1));
         }
 
         processed.add(blankLine);
@@ -102,12 +104,14 @@ public class Challenge20 {
 
     private List<String> expandImage(final List<String> image) {
         final int width = image.get(0).length();
-        final String blankLine = new String(new char[width + 2]).replace("\0", ".");
+        final String blankLine = new String(new char[width + 4]).replace("\0", ".");
         final List<String> expanded = new ArrayList<>();
         expanded.add(blankLine);
+        expanded.add(blankLine);
         for (final String line : image) {
-            expanded.add("." + line + ".");
+            expanded.add(".." + line + "..");
         }
+        expanded.add(blankLine);
         expanded.add(blankLine);
         return expanded;
     }
