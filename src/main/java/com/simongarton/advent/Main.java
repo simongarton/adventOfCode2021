@@ -30,7 +30,8 @@ public class Main {
 //        this.day14();
 //        this.day15();
 //        this.day16();
-        this.day17();
+//        this.day17();
+        this.day18();
     }
 
     private void day1() throws IOException {
