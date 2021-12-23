@@ -1,28 +1,39 @@
 package com.simongarton.advent.challenge;
 
-import com.google.gson.Gson;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class Snailfish {
-    private static final Gson gson = new Gson();
 
+    private final String source;
+    private final Snailfish parent;
     private Snailfish left;
     private Snailfish right;
     private Integer value;
+    private final int level;
 
-    public Snailfish() {
-    }
-
-    public Snailfish(final String line) {
-        final int index = this.findMiddleComma(line);
+    public Snailfish(final String part, final Snailfish parent) {
+        this.parent = parent;
+        this.level = parent == null ? 0 : parent.level + 1;
+        this.source = part;
+        final int index = this.findMiddleComma(part);
         if (index == -1) {
-            this.value = Integer.parseInt(line);
+            this.value = Integer.parseInt(part);
             return;
         }
-        final String leftPart = line.substring(1, index);
-        final String rightPart = line.substring(index + 1, line.length() - 1);
-//            System.out.println(leftPart + " | " + rightPart);
-        this.left = new Snailfish(leftPart);
-        this.right = new Snailfish(rightPart);
+        final String leftPart = part.substring(1, index);
+        final String rightPart = part.substring(index + 1, part.length() - 1);
+        this.left = new Snailfish(leftPart, this);
+        this.right = new Snailfish(rightPart, this);
+    }
+
+    public Snailfish(final Snailfish clone) {
+        this.source = clone.source;
+        this.value = clone.value;
+        this.left = clone.left;
+        this.right = clone.right;
+        this.parent = clone.parent;
+        this.level = clone.level;
     }
 
     @Override
@@ -31,7 +42,112 @@ public final class Snailfish {
             return this.value + "";
         }
         return "[" + this.left.toString() + "," + this.right.toString() + "]";
-        //return gson.toJson(this);
+    }
+
+    public static Snailfish add(final Snailfish left, final Snailfish right) {
+        final Snailfish add = new Snailfish("", null);
+        add.left = left;
+        add.right = right;
+        final Snailfish result = explodeAndSplitUntilQuiet(add);
+        return result;
+    }
+
+    private static Snailfish explodeAndSplitUntilQuiet(final Snailfish add) {
+        final Snailfish changeable = new Snailfish(add);
+        boolean changesMade = false;
+        while (!changesMade) {
+            changesMade = false;
+            if (add.explode()) {
+                changesMade = true;
+                continue;
+            }
+            if (add.split()) {
+                changesMade = true;
+            }
+        }
+        return changeable;
+    }
+
+    boolean split() {
+        final List<Snailfish> snailfishList = this.getSnailfishList();
+        this.listPairs();
+        for (int i = 0; i < snailfishList.size(); i++) {
+            final Snailfish snailfish = snailfishList.get(i);
+            if (snailfish.value == null) {
+                continue;
+            }
+            if (snailfish.value < 10) {
+                continue;
+            }
+            System.out.println("splitting index " + i);
+            this.splitThisSnailfish(snailfishList, i);
+            return true;
+        }
+        return false;
+    }
+
+    private void splitThisSnailfish(final List<Snailfish> snailfishList, final int i) {
+        final Snailfish snailfish = snailfishList.get(i);
+        final long leftValue = Math.round(Math.floor(snailfish.value / 2.0));
+        final long rightValue = Math.round(Math.ceil(snailfish.value / 2.0));
+        snailfish.value = null;
+        final Snailfish lefty = new Snailfish(snailfish);
+        lefty.value = (int) leftValue;
+        snailfish.left = lefty;
+        final Snailfish righty = new Snailfish(snailfish);
+        righty.value = (int) rightValue;
+        snailfish.right = righty;
+    }
+
+    boolean explode() {
+        final List<Snailfish> snailfishList = this.getSnailfishList();
+        this.listPairs();
+        for (int i = 0; i < snailfishList.size(); i++) {
+            final Snailfish snailfish = snailfishList.get(i);
+            if (snailfish.level == 5) {
+                System.out.println("exploding index " + i);
+                this.explodeThisSnailfish(snailfishList, i);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void explodeThisSnailfish(final List<Snailfish> snailfishList, final int i) {
+        final Snailfish snailfish = snailfishList.get(i);
+        // first we track back, adding the left value to the first regular number to the left
+        // of where we are at index i
+        final int leftValue = snailfish.parent.left.value;
+        int goingLeft = i - 1;
+        while (goingLeft > 0) {
+            final Snailfish lefty = snailfishList.get(goingLeft);
+            System.out.println("looking at " + lefty + " at goingLeft " + goingLeft);
+            if (lefty.value != null) {
+                lefty.value += leftValue;
+                break;
+            }
+            goingLeft--;
+        }
+
+        // then we add the right value to the first regular number to the right of where we are at index i;
+        final int rightValue = snailfish.parent.right.value;
+        int goingRight = i + snailfish.source.length() + 1;
+        while (goingRight < snailfishList.size()) {
+            final Snailfish righty = snailfishList.get(goingRight);
+            System.out.println("looking at " + righty + " at goingRight " + goingRight);
+            if (righty.value != null) {
+                righty.value += rightValue;
+                break;
+            }
+            goingRight++;
+        }
+
+        // and finally we "explode" this pair - the pair, which is a Snailfish with two children both with single values
+        // becomes just a value. It will be the parent - and I need to delete both of the children.
+        final Snailfish parent = snailfish.parent;
+        parent.value = 0;
+        parent.left = null;
+        parent.right = null;
     }
 
     private int findMiddleComma(final String line) {
@@ -55,194 +171,56 @@ public final class Snailfish {
         return -1;
     }
 
-    private Snailfish add() {
-        final String leftLine = gson.toJson(this.left);
-        final String rightLine = gson.toJson(this.right);
-        final String combinedLine = "{\"left\":" + leftLine + ",\"right\":" + rightLine + "}";
-        return gson.fromJson(combinedLine, Snailfish.class);
+    public void drawTree() {
+        System.out.println(this);
+        this.drawTree(this, 0);
+        System.out.println();
     }
 
-//    private Snailfish reduce() {
-//        int actions = Integer.MAX_VALUE;
-//        while (actions > 0) {
-//            actions = 0;
-//            if (this.explode()) {
-//                actions++;
-//                continue;
-//            }
-//            if (this.split()) {
-//                actions++;
-//                continue;
-//            }
-//        }
-//        return this;
-//    }
-
-    public static Snailfish split(final Snailfish original) {
-        return null;
+    private void drawTree(final Snailfish snailfish, final int i) {
+        if (snailfish.left != null) {
+            System.out.println(this.indent(snailfish.left.toString(), i * 2));
+            this.drawTree(snailfish.left, i + 1);
+        }
+        if (snailfish.right != null) {
+            System.out.println(this.indent(snailfish.right.toString(), i * 2));
+            this.drawTree(snailfish.right, i + 1);
+        }
     }
 
-    public static Snailfish explode(final Snailfish original) {
-        final String line = original.toString();
-        int currentNesting = 0;
-        for (int index = 0; index < line.length() - 1; index++) {
-            if (line.charAt(index) == '[') {
-                currentNesting++;
-            }
-            if (line.charAt(index) == ']') {
-                currentNesting--;
-            }
-            // this will find a pair with the opening [ at index
-            final String pair = getPairAtIndex(line, index);
-            if (pair == null) {
-                continue;
-            }
-            if (currentNesting == 4) {
-                System.out.println("Found pair '" + pair + "' at index " + index + " with nesting " + currentNesting);
-                return explodeAt(original, index, pair);
-            }
-        }
-        return null;
+    private String indent(final String s, final int size) {
+        return new String(new char[size]).replace("\0", ".") + s;
     }
 
-    private static Snailfish explodeAt(final Snailfish original, final int explodeAt, final String pair) {
-        final String line = original.toString();
-        final String internals = pair.substring(1, pair.length() - 1);
-        // a pair might contain pairs, e.g. [4, [3,2]]
-        // I think I might give up !
-        final String[] pairParts = internals.split(",");
-        // now I am looking for a number before the line index explodeAt. The
-        // problem is that is might be more than 1 digit, so I can't check individual characters.
-        // So I need to track left looking for a number, and then continue tracking left until I find a comma
-        StringReference explodeLeft = null;
-        // explodeAt - 2 as explodeAt is the opening [ of the pair, and it will be preceded by a comma
-        for (int index = explodeAt - 2; index > 0; index--) {
-            if (isNumber(line.charAt(index) + "")) {
-                explodeLeft = findNumberStartingAtIndexAndGoingBackwards(line, index);
-                explodeLeft.valueToAdd = Integer.parseInt(pairParts[0]);
-                break;
-            }
+    private String padTo(final String s, final int size) {
+        if (s.length() > size) {
+            return new String(new char[size]).replace("\0", "*");
         }
-        StringReference explodeRight = null;
-        // start looking at the end of the current pair
-        final int rightStart = explodeAt + pair.length();
-        for (int index = rightStart; index < line.length() - 1; index++) {
-            if (isNumber(line.charAt(index) + "")) {
-                explodeRight = findNumberStartingAtIndexAndGoingForwards(line, index);
-                explodeRight.valueToAdd = Integer.parseInt(pairParts[1]);
-                break;
-            }
-        }
-        return new Snailfish(assembleExplodedLine(line, explodeAt, pair, explodeLeft, explodeRight));
+        return new String(new char[size - s.length()]).replace("\0", " ") + s;
     }
 
-    protected static String assembleExplodedLine(final String line,
-                                                 final int explodeAt,
-                                                 final String pair,
-                                                 final StringReference explodeLeft,
-                                                 final StringReference explodeRight) {
-
-        // start [[[[[9,8],1],2],3],4]
-        // end   [[[[0,9],2],3],4]
-        //       012345678901234567890
-        String finalLine = "";
-        if (explodeLeft == null) {
-            finalLine += line.substring(0, explodeAt);
-        } else {
-            finalLine += line.substring(0, explodeLeft.start);
-            finalLine += String.valueOf(explodeLeft.originalValue + explodeLeft.valueToAdd);
-            finalLine += line.substring(0 + explodeLeft.start + explodeLeft.length, explodeAt);
+    public void listPairs() {
+        System.out.println(this);
+        final List<Snailfish> snailfishList = this.getSnailfishList();
+        for (int i = 0; i < snailfishList.size(); i++) {
+            System.out.println(this.padTo("" + i, 4) + ":" + snailfishList.get(i) + " (level " + snailfishList.get(i).level + ")");
         }
-        finalLine += "0";
-        if (explodeRight == null) {
-            finalLine += line.substring(explodeAt + pair.length());
-        } else {
-            finalLine += line.substring(explodeAt + pair.length(), explodeRight.start);
-            finalLine += String.valueOf(explodeRight.originalValue + explodeRight.valueToAdd);
-            finalLine += line.substring(explodeRight.start + explodeRight.length);
-        }
-        return finalLine;
+        System.out.println();
     }
 
-    protected static StringReference findNumberStartingAtIndexAndGoingBackwards(final String line, final int indexOfFirstDigitFound) {
-        int start = indexOfFirstDigitFound;
-        while (isNumber(line.charAt(start) + "")) {
-            start--;
-        }
-        start++;
-        final StringReference stringReference = new StringReference();
-        stringReference.start = start;
-        stringReference.length = indexOfFirstDigitFound - start;
-        stringReference.substring = line.substring(start, indexOfFirstDigitFound + 1);
-        stringReference.originalValue = Integer.parseInt(stringReference.substring);
-        return stringReference;
+    public List<Snailfish> getSnailfishList() {
+        final List<Snailfish> snailfishList = new ArrayList<>();
+        this.addSnailfish(0, this, snailfishList);
+        return snailfishList;
     }
 
-    protected static StringReference findNumberStartingAtIndexAndGoingForwards(final String line, final int indexOfFirstDigitFound) {
-        int end = indexOfFirstDigitFound;
-        while (isNumber(line.charAt(end) + "")) {
-            end++;
+    private void addSnailfish(final int index, final Snailfish snailfish, final List<Snailfish> snailfishList) {
+        snailfishList.add(snailfish);
+        if (snailfish.left != null) {
+            this.addSnailfish(index + 1, snailfish.left, snailfishList);
         }
-        final StringReference stringReference = new StringReference();
-        stringReference.start = indexOfFirstDigitFound;
-        stringReference.length = end - indexOfFirstDigitFound;
-        stringReference.substring = line.substring(indexOfFirstDigitFound, end);
-        stringReference.originalValue = Integer.parseInt(stringReference.substring);
-        return stringReference;
-    }
-
-    private static boolean isNumber(final String character) {
-        try {
-            Integer.parseInt(character);
-        } catch (final NumberFormatException nfe) {
-            return false;
+        if (snailfish.right != null) {
+            this.addSnailfish(index + 1, snailfish.right, snailfishList);
         }
-        return true;
-    }
-
-    private static String getPairAtIndex(final String line, final int index) {
-        if (line.charAt(index) != '[') {
-            return null;
-        }
-        if (line.charAt(index + 1) == '[') {
-            return null;
-        }
-        int pairsOpened = 0;
-//        for (int i = 0; i < index; i++) {
-//            if (line.charAt(index) != '[') {
-//                pairsOpened++;
-//            }
-//            if (line.charAt(index + 1) == '[') {
-//                pairsOpened--;
-//            }
-//        }
-        for (int i = index; i < line.length(); i++) {
-            if (line.charAt(i) == '[') {
-                pairsOpened++;
-            }
-            if (line.charAt(i) == ']') {
-                pairsOpened--;
-                if (pairsOpened == 0) {
-                    return line.substring(index, i + 1);
-                }
-            }
-        }
-        throw new RuntimeException("Can't find close pair.");
-    }
-
-    public Snailfish add(final Snailfish other) {
-        final Snailfish snailfish = new Snailfish();
-        snailfish.left = this;
-        snailfish.right = other;
-        return snailfish;
-    }
-
-    public static final class StringReference {
-        int start;
-        int length;
-        String substring;
-
-        int originalValue;
-        int valueToAdd;
     }
 }

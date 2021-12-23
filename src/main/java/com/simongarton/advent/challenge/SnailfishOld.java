@@ -2,17 +2,17 @@ package com.simongarton.advent.challenge;
 
 import com.google.gson.Gson;
 
-public final class Snailfish {
+public final class SnailfishOld {
     private static final Gson gson = new Gson();
 
-    private Snailfish left;
-    private Snailfish right;
+    private SnailfishOld left;
+    private SnailfishOld right;
     private Integer value;
 
-    public Snailfish() {
+    public SnailfishOld() {
     }
 
-    public Snailfish(final String line) {
+    public SnailfishOld(final String line) {
         final int index = this.findMiddleComma(line);
         if (index == -1) {
             this.value = Integer.parseInt(line);
@@ -21,8 +21,8 @@ public final class Snailfish {
         final String leftPart = line.substring(1, index);
         final String rightPart = line.substring(index + 1, line.length() - 1);
 //            System.out.println(leftPart + " | " + rightPart);
-        this.left = new Snailfish(leftPart);
-        this.right = new Snailfish(rightPart);
+        this.left = new SnailfishOld(leftPart);
+        this.right = new SnailfishOld(rightPart);
     }
 
     @Override
@@ -55,11 +55,11 @@ public final class Snailfish {
         return -1;
     }
 
-    private Snailfish add() {
+    private SnailfishOld add() {
         final String leftLine = gson.toJson(this.left);
         final String rightLine = gson.toJson(this.right);
         final String combinedLine = "{\"left\":" + leftLine + ",\"right\":" + rightLine + "}";
-        return gson.fromJson(combinedLine, Snailfish.class);
+        return gson.fromJson(combinedLine, SnailfishOld.class);
     }
 
 //    private Snailfish reduce() {
@@ -78,11 +78,11 @@ public final class Snailfish {
 //        return this;
 //    }
 
-    public static Snailfish split(final Snailfish original) {
+    public static SnailfishOld split(final SnailfishOld original) {
         return null;
     }
 
-    public static Snailfish explode(final Snailfish original) {
+    public static SnailfishOld explode(final SnailfishOld original) {
         final String line = original.toString();
         int currentNesting = 0;
         for (int index = 0; index < line.length() - 1; index++) {
@@ -105,7 +105,7 @@ public final class Snailfish {
         return null;
     }
 
-    private static Snailfish explodeAt(final Snailfish original, final int explodeAt, final String pair) {
+    private static SnailfishOld explodeAt(final SnailfishOld original, final int explodeAt, final String pair) {
         final String line = original.toString();
         final String internals = pair.substring(1, pair.length() - 1);
         // a pair might contain pairs, e.g. [4, [3,2]]
@@ -133,7 +133,7 @@ public final class Snailfish {
                 break;
             }
         }
-        return new Snailfish(assembleExplodedLine(line, explodeAt, pair, explodeLeft, explodeRight));
+        return new SnailfishOld(assembleExplodedLine(line, explodeAt, pair, explodeLeft, explodeRight));
     }
 
     protected static String assembleExplodedLine(final String line,
@@ -230,8 +230,8 @@ public final class Snailfish {
         throw new RuntimeException("Can't find close pair.");
     }
 
-    public Snailfish add(final Snailfish other) {
-        final Snailfish snailfish = new Snailfish();
+    public SnailfishOld add(final SnailfishOld other) {
+        final SnailfishOld snailfish = new SnailfishOld();
         snailfish.left = this;
         snailfish.right = other;
         return snailfish;

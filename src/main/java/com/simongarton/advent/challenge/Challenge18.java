@@ -1,6 +1,5 @@
 package com.simongarton.advent.challenge;
 
-import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,11 +17,17 @@ public class Challenge18 {
 
     protected long part1(final String[] lines) {
         final long start = System.currentTimeMillis();
+        Snailfish added = new Snailfish(lines[0], null);
+        int index = 0;
         for (final String line : lines) {
-            final Snailfish snailfish = new Snailfish(line);
-            System.out.println(line + " : " + snailfish);
-            final Snailfish mutated = addAndReduceSnailfish();
+            if (index == 0) {
+                index ++;
+                continue;
+            }
+            final Snailfish addee = new Snailfish(line, null);
+            added = Snailfish.add(added, addee);
         }
+        System.out.println(added);
         final long result = 0;
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_1,
@@ -44,6 +49,4 @@ public class Challenge18 {
                 System.currentTimeMillis() - start));
         return result;
     }
-
-
 }
