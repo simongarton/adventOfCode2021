@@ -42,7 +42,31 @@ public class Challenge18 {
 
     protected long part2(final String[] lines) {
         final long start = System.currentTimeMillis();
-        final long result = 0;
+        long biggest = 0;
+        for (int i = 0; i < lines.length; i++) {
+            for (int j = 0; j < lines.length; j++) {
+                if (i == j) {
+                    continue;
+                }
+                Snailfish one = new Snailfish(lines[i], null);
+                Snailfish two = new Snailfish(lines[j], null);
+                Snailfish mega = Snailfish.add(one, two);
+                long magnitude = mega.getMagnitude();
+                if (magnitude > biggest) {
+                    System.out.println("New contender " + i + "," + j + " at " + magnitude);
+                    biggest = magnitude;
+                }
+                one = new Snailfish(lines[i], null);
+                two = new Snailfish(lines[j], null);
+                mega = Snailfish.add(two, one);
+                magnitude = mega.getMagnitude();
+                if (magnitude > biggest) {
+                    System.out.println("New contender " + j + "," + i + " at " + magnitude);
+                    biggest = magnitude;
+                }
+            }
+        }
+        final long result = biggest;
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_2,
                 result,

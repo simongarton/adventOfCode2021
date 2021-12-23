@@ -115,7 +115,7 @@ public class Main {
     }
 
     private void day18() throws IOException {
-        final String[] lines = Files.readAllLines(Paths.get("data/day18-sample.txt")).toArray(new String[0]);
+        final String[] lines = Files.readAllLines(Paths.get("data/day18.txt")).toArray(new String[0]);
         new Challenge18().run(lines);
     }
 

@@ -89,7 +89,6 @@ public final class Snailfish {
         boolean changesMade = true;
         int iteration = 0;
         while (changesMade) {
-            System.out.println(iteration++ + " " + add);
             changesMade = false;
             if (add.explode()) {
                 changesMade = true;
@@ -112,7 +111,7 @@ public final class Snailfish {
             if (snailfish.value < 10) {
                 continue;
             }
-            System.out.println("splitting index " + i);
+//            System.out.println("splitting index " + i);
             this.splitThisSnailfish(snailfishList, i);
             return true;
         }
@@ -141,7 +140,7 @@ public final class Snailfish {
         for (int i = 0; i < snailfishList.size(); i++) {
             final Snailfish snailfish = snailfishList.get(i);
             if (snailfish.getLevel() == 5) {
-                System.out.println("exploding index " + i);
+//                System.out.println("exploding index " + i);
                 this.explodeThisSnailfish(snailfishList, i);
                 return true;
             }
