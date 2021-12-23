@@ -274,4 +274,11 @@ public final class Snailfish {
             this.addSnailfish(index + 1, snailfish.right, snailfishList);
         }
     }
+
+    public long getMagnitude() {
+        if (this.value != null) {
+            return this.value;
+        }
+        return 3 * this.left.getMagnitude() + 2 * this.right.getMagnitude();
+    }
 }

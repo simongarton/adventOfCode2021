@@ -28,7 +28,7 @@ public class Challenge18 {
             added = Snailfish.add(added, addee);
         }
         System.out.println(added);
-        final long result = 0;
+        final long result = added.getMagnitude();
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_1,
                 result,
