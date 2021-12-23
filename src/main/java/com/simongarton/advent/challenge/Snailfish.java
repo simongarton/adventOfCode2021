@@ -5,7 +5,32 @@ import java.util.List;
 
 public final class Snailfish {
 
-    private final String source;
+    /*
+
+    If I run the little test I get this - which isn't right, the 7 isn't getting carried aross
+
+    4 [[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]
+    exploding index 14
+    5 [[[[0,7],4],[[7,8],[6,0]]],[1,1]]
+
+    But if I plug those values into the test.
+
+    Arguments.of("[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]", "[[[[0,7],4],[[7,8],[6,0]]],[8,1]]")
+    exploding index 14 ... and it works
+
+    1, [[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]
+    2, [[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]
+       0123456789012345678901234567890123456789
+
+    Hang on, what are the indexes ? Not chars anyway
+
+    listPairs on the explodee ... both the same, we get different result.
+    6
+        0:6 (level 5 parent [6,7]:4)
+
+     */
+
+    private String source;
     private Snailfish parent;
     private Snailfish left;
     private Snailfish right;
@@ -99,11 +124,13 @@ public final class Snailfish {
         final long leftValue = Math.round(Math.floor(snailfish.value / 2.0));
         final long rightValue = Math.round(Math.ceil(snailfish.value / 2.0));
         snailfish.value = null;
-        final Snailfish lefty = new Snailfish(snailfish);
+
+        final Snailfish lefty = new Snailfish("", snailfish);
         lefty.value = (int) leftValue;
-        snailfish.left = lefty;
         lefty.parent = snailfish;
-        final Snailfish righty = new Snailfish(snailfish);
+        snailfish.left = lefty;
+
+        final Snailfish righty = new Snailfish("", snailfish);
         righty.value = (int) rightValue;
         righty.parent = snailfish;
         snailfish.right = righty;
@@ -139,7 +166,7 @@ public final class Snailfish {
 
         // then we add the right value to the first regular number to the right of where we are at index i;
         final int rightValue = snailfish.parent.right.value;
-        int goingRight = i + snailfish.source.length() + 1;
+        int goingRight = i + 2;
         while (goingRight < snailfishList.size()) {
             final Snailfish righty = snailfishList.get(goingRight);
             if (righty.value != null) {
