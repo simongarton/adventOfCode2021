@@ -6,19 +6,19 @@ import java.util.List;
 public final class Snailfish {
 
     private final String source;
-    private final Snailfish parent;
+    private Snailfish parent;
     private Snailfish left;
     private Snailfish right;
     private Integer value;
-    private final int level;
 
     public Snailfish(final String part, final Snailfish parent) {
         this.parent = parent;
-        this.level = parent == null ? 0 : parent.level + 1;
         this.source = part;
         final int index = this.findMiddleComma(part);
         if (index == -1) {
-            this.value = Integer.parseInt(part);
+            if (!part.equalsIgnoreCase("")) {
+                this.value = Integer.parseInt(part);
+            }
             return;
         }
         final String leftPart = part.substring(1, index);
@@ -33,7 +33,13 @@ public final class Snailfish {
         this.left = clone.left;
         this.right = clone.right;
         this.parent = clone.parent;
-        this.level = clone.level;
+    }
+
+    public int getLevel() {
+        if (this.parent == null) {
+            return 0;
+        }
+        return 1 + this.parent.getLevel();
     }
 
     @Override
@@ -47,15 +53,18 @@ public final class Snailfish {
     public static Snailfish add(final Snailfish left, final Snailfish right) {
         final Snailfish add = new Snailfish("", null);
         add.left = left;
+        left.parent = add;
         add.right = right;
+        right.parent = add;
         final Snailfish result = explodeAndSplitUntilQuiet(add);
         return result;
     }
 
     private static Snailfish explodeAndSplitUntilQuiet(final Snailfish add) {
-        final Snailfish changeable = new Snailfish(add);
-        boolean changesMade = false;
-        while (!changesMade) {
+        boolean changesMade = true;
+        int iteration = 0;
+        while (changesMade) {
+            System.out.println(iteration++ + " " + add);
             changesMade = false;
             if (add.explode()) {
                 changesMade = true;
@@ -65,12 +74,11 @@ public final class Snailfish {
                 changesMade = true;
             }
         }
-        return changeable;
+        return add;
     }
 
     boolean split() {
         final List<Snailfish> snailfishList = this.getSnailfishList();
-        this.listPairs();
         for (int i = 0; i < snailfishList.size(); i++) {
             final Snailfish snailfish = snailfishList.get(i);
             if (snailfish.value == null) {
@@ -94,17 +102,18 @@ public final class Snailfish {
         final Snailfish lefty = new Snailfish(snailfish);
         lefty.value = (int) leftValue;
         snailfish.left = lefty;
+        lefty.parent = snailfish;
         final Snailfish righty = new Snailfish(snailfish);
         righty.value = (int) rightValue;
+        righty.parent = snailfish;
         snailfish.right = righty;
     }
 
     boolean explode() {
         final List<Snailfish> snailfishList = this.getSnailfishList();
-        this.listPairs();
         for (int i = 0; i < snailfishList.size(); i++) {
             final Snailfish snailfish = snailfishList.get(i);
-            if (snailfish.level == 5) {
+            if (snailfish.getLevel() == 5) {
                 System.out.println("exploding index " + i);
                 this.explodeThisSnailfish(snailfishList, i);
                 return true;
@@ -121,7 +130,6 @@ public final class Snailfish {
         int goingLeft = i - 1;
         while (goingLeft > 0) {
             final Snailfish lefty = snailfishList.get(goingLeft);
-            System.out.println("looking at " + lefty + " at goingLeft " + goingLeft);
             if (lefty.value != null) {
                 lefty.value += leftValue;
                 break;
@@ -134,7 +142,6 @@ public final class Snailfish {
         int goingRight = i + snailfish.source.length() + 1;
         while (goingRight < snailfishList.size()) {
             final Snailfish righty = snailfishList.get(goingRight);
-            System.out.println("looking at " + righty + " at goingRight " + goingRight);
             if (righty.value != null) {
                 righty.value += rightValue;
                 break;
@@ -203,7 +210,24 @@ public final class Snailfish {
         System.out.println(this);
         final List<Snailfish> snailfishList = this.getSnailfishList();
         for (int i = 0; i < snailfishList.size(); i++) {
-            System.out.println(this.padTo("" + i, 4) + ":" + snailfishList.get(i) + " (level " + snailfishList.get(i).level + ")");
+            final Snailfish snailfish = snailfishList.get(i);
+            if (snailfish.parent != null) {
+                System.out.println(this.padTo("" + i, 4) + ":"
+                        + snailfish
+                        + " (level "
+                        + snailfish.getLevel()
+                        + " parent "
+                        + snailfish.parent
+                        + ":"
+                        + snailfish.parent.getLevel()
+                        + ")");
+            } else {
+                System.out.println(this.padTo("" + i, 4) + ":"
+                        + snailfish
+                        + " (level "
+                        + snailfish.getLevel()
+                        + ")");
+            }
         }
         System.out.println();
     }

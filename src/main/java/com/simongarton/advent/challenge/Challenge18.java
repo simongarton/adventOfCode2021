@@ -21,7 +21,7 @@ public class Challenge18 {
         int index = 0;
         for (final String line : lines) {
             if (index == 0) {
-                index ++;
+                index++;
                 continue;
             }
             final Snailfish addee = new Snailfish(line, null);
