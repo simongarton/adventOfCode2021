@@ -36,10 +36,6 @@ public class Challenge18 {
         return result;
     }
 
-    private Snailfish addAndReduceSnailfish() {
-        return null;
-    }
-
     protected long part2(final String[] lines) {
         final long start = System.currentTimeMillis();
         long biggest = 0;
@@ -48,12 +44,12 @@ public class Challenge18 {
                 if (i == j) {
                     continue;
                 }
+                // since I mutate these, I have to load them in each time I want to use them
                 Snailfish one = new Snailfish(lines[i], null);
                 Snailfish two = new Snailfish(lines[j], null);
                 Snailfish mega = Snailfish.add(one, two);
                 long magnitude = mega.getMagnitude();
                 if (magnitude > biggest) {
-                    System.out.println("New contender " + i + "," + j + " at " + magnitude);
                     biggest = magnitude;
                 }
                 one = new Snailfish(lines[i], null);
@@ -61,7 +57,6 @@ public class Challenge18 {
                 mega = Snailfish.add(two, one);
                 magnitude = mega.getMagnitude();
                 if (magnitude > biggest) {
-                    System.out.println("New contender " + j + "," + i + " at " + magnitude);
                     biggest = magnitude;
                 }
             }

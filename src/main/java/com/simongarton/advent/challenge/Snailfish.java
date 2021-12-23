@@ -5,32 +5,6 @@ import java.util.List;
 
 public final class Snailfish {
 
-    /*
-
-    If I run the little test I get this - which isn't right, the 7 isn't getting carried aross
-
-    4 [[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]
-    exploding index 14
-    5 [[[[0,7],4],[[7,8],[6,0]]],[1,1]]
-
-    But if I plug those values into the test.
-
-    Arguments.of("[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]", "[[[[0,7],4],[[7,8],[6,0]]],[8,1]]")
-    exploding index 14 ... and it works
-
-    1, [[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]
-    2, [[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]
-       0123456789012345678901234567890123456789
-
-    Hang on, what are the indexes ? Not chars anyway
-
-    listPairs on the explodee ... both the same, we get different result.
-    6
-        0:6 (level 5 parent [6,7]:4)
-
-     */
-
-    private String source;
     private Snailfish parent;
     private Snailfish left;
     private Snailfish right;
@@ -38,7 +12,6 @@ public final class Snailfish {
 
     public Snailfish(final String part, final Snailfish parent) {
         this.parent = parent;
-        this.source = part;
         final int index = this.findMiddleComma(part);
         if (index == -1) {
             if (!part.equalsIgnoreCase("")) {
@@ -50,14 +23,6 @@ public final class Snailfish {
         final String rightPart = part.substring(index + 1, part.length() - 1);
         this.left = new Snailfish(leftPart, this);
         this.right = new Snailfish(rightPart, this);
-    }
-
-    public Snailfish(final Snailfish clone) {
-        this.source = clone.source;
-        this.value = clone.value;
-        this.left = clone.left;
-        this.right = clone.right;
-        this.parent = clone.parent;
     }
 
     public int getLevel() {
@@ -81,13 +46,11 @@ public final class Snailfish {
         left.parent = add;
         add.right = right;
         right.parent = add;
-        final Snailfish result = explodeAndSplitUntilQuiet(add);
-        return result;
+        return explodeAndSplitUntilQuiet(add);
     }
 
     private static Snailfish explodeAndSplitUntilQuiet(final Snailfish add) {
         boolean changesMade = true;
-        int iteration = 0;
         while (changesMade) {
             changesMade = false;
             if (add.explode()) {
@@ -111,7 +74,6 @@ public final class Snailfish {
             if (snailfish.value < 10) {
                 continue;
             }
-//            System.out.println("splitting index " + i);
             this.splitThisSnailfish(snailfishList, i);
             return true;
         }
@@ -140,7 +102,6 @@ public final class Snailfish {
         for (int i = 0; i < snailfishList.size(); i++) {
             final Snailfish snailfish = snailfishList.get(i);
             if (snailfish.getLevel() == 5) {
-//                System.out.println("exploding index " + i);
                 this.explodeThisSnailfish(snailfishList, i);
                 return true;
             }
@@ -150,8 +111,6 @@ public final class Snailfish {
 
     private void explodeThisSnailfish(final List<Snailfish> snailfishList, final int i) {
         final Snailfish snailfish = snailfishList.get(i);
-        // first we track back, adding the left value to the first regular number to the left
-        // of where we are at index i
         final int leftValue = snailfish.parent.left.value;
         int goingLeft = i - 1;
         while (goingLeft > 0) {
@@ -163,7 +122,6 @@ public final class Snailfish {
             goingLeft--;
         }
 
-        // then we add the right value to the first regular number to the right of where we are at index i;
         final int rightValue = snailfish.parent.right.value;
         int goingRight = i + 2;
         while (goingRight < snailfishList.size()) {
@@ -175,8 +133,6 @@ public final class Snailfish {
             goingRight++;
         }
 
-        // and finally we "explode" this pair - the pair, which is a Snailfish with two children both with single values
-        // becomes just a value. It will be the parent - and I need to delete both of the children.
         final Snailfish parent = snailfish.parent;
         parent.value = 0;
         parent.left = null;
