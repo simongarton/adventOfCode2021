@@ -52,9 +52,9 @@ public class Challenge20 {
             image.add(lines[i]);
         }
         printImage(image);
-        image = this.expandImage(image, 10);
+        image = this.expandImage(image, 60);
         printImage(image);
-        for (int step = 1; step <= 2; step++) {
+        for (int step = 1; step <= 50; step++) {
             image = this.processImage(image, step);
             this.printImage(image);
         }
