@@ -20,6 +20,21 @@ public class Challenge20 {
 
     The actual image is "too high" but looking at the results, the top and bottom lines go solid ... which doesn't
     feel right.
+
+    OK ... I think I see the trap. The algorithm at index 0 is # which means that all dark pixels surrounded by
+    dark pixels will go light. The algorithm at index 511 ("111111111") is . which means they will go dark again.
+    So as I expand out, I need to calculate if it's light or dark.
+
+    The main map will be flashing light, dark alternately.
+    The boundary needs to be calculated.
+
+    Hmm.
+
+    I think we just need to go well outside the likely expansion area ... and then run over all cells, and for
+    each neighbour outside the range, it's either going to be on if it's an odd step, or off if it's an even step ...
+    ... which I can probably read from rule 0.
+
+
      */
 
     private String algorithm;
@@ -36,9 +51,11 @@ public class Challenge20 {
         for (int i = 2; i < lines.length; i++) {
             image.add(lines[i]);
         }
-        for (int round = 0; round < 2; round++) {
-            image = this.expandImage(image);
-            image = this.processImage(image);
+        printImage(image);
+        image = this.expandImage(image, 10);
+        printImage(image);
+        for (int step = 1; step <= 2; step++) {
+            image = this.processImage(image, step);
             this.printImage(image);
         }
         final long result = this.countLit(image);
@@ -49,35 +66,32 @@ public class Challenge20 {
         return result;
     }
 
-    private void debugPattern(final List<String> image, final int row, final int col) {
-        final String pattern = this.readPattern(image, row, col);
+    private void debugPattern(final List<String> image, final int row, final int col, final int step) {
+        final String pattern = this.readPattern(image, row, col, step);
         final String binary = this.patternToBinary(pattern);
         final int encoded = Integer.parseInt(binary, 2);
         final String enhanced = this.algorithm.charAt(encoded) + "";
         System.out.println(encoded + " = " + enhanced + " for " + pattern);
     }
 
-    private List<String> processImage(final List<String> image) {
+    private List<String> processImage(final List<String> image, final int step) {
         final int width = image.get(0).length();
         final int height = image.size();
         final List<String> processed = new ArrayList<>();
-        final String blankLine = new String(new char[width]).replace("\0", ".");
-        processed.add(blankLine);
 
-        for (int row = 1; row < height - 1; row++) {
-            String newLine = ".";
-            for (int col = 1; col < width - 1; col++) {
-                final String pattern = this.readPattern(image, row, col);
+        for (int row = 0; row < height; row++) {
+            String newLine = "";
+            for (int col = 0; col < width; col++) {
+                final String pattern = this.readPattern(image, row, col, step);
                 final String binary = this.patternToBinary(pattern);
                 final int encoded = Integer.parseInt(binary, 2);
                 final String enhanced = this.algorithm.charAt(encoded) + "";
 //                System.out.println(row + "," + col + " : " + encoded + " = " + enhanced + " for " + pattern + " (" + binary + ")");
                 newLine += enhanced;
             }
-            processed.add(newLine + ".");
+            processed.add(newLine + "");
         }
 
-        processed.add(blankLine);
         return processed;
     }
 
@@ -88,40 +102,65 @@ public class Challenge20 {
         return binary;
     }
 
-    private String readPattern(final List<String> image, final int row, final int col) {
+    private String readPattern(final List<String> image, final int row, final int col, final int step) {
         String pattern = "";
-        pattern += image.get(row - 1).charAt(col - 1);
-        pattern += image.get(row - 1).charAt(col);
-        pattern += image.get(row - 1).charAt(col + 1);
-        pattern += image.get(row).charAt(col - 1);
-        pattern += image.get(row).charAt(col);
-        pattern += image.get(row).charAt(col + 1);
-        pattern += image.get(row + 1).charAt(col - 1);
-        pattern += image.get(row + 1).charAt(col);
-        pattern += image.get(row + 1).charAt(col + 1);
+        pattern += this.infinitePattern(image, row - 1, col - 1, step);
+        pattern += this.infinitePattern(image, row - 1, col, step);
+        pattern += this.infinitePattern(image, row - 1, col + 1, step);
+        pattern += this.infinitePattern(image, row, col - 1, step);
+        pattern += this.infinitePattern(image, row, col, step);
+        pattern += this.infinitePattern(image, row, col + 1, step);
+        pattern += this.infinitePattern(image, row + 1, col - 1, step);
+        pattern += this.infinitePattern(image, row + 1, col, step);
+        pattern += this.infinitePattern(image, row + 1, col + 1, step);
         return pattern;
     }
 
-    private List<String> expandImage(final List<String> image) {
+    private String infinitePattern(final List<String> image, final int row, final int col, final int step) {
         final int width = image.get(0).length();
-        final String blankLine = new String(new char[width + 4]).replace("\0", ".");
-        final List<String> expanded = new ArrayList<>();
-        expanded.add(blankLine);
-        expanded.add(blankLine);
-        for (final String line : image) {
-            expanded.add(".." + line + "..");
+        final int height = image.size();
+        final String infinite = step % 2 == 1 ? "." : "#";
+        if ((row < 0) || row >= width) {
+            return infinite;
         }
-        expanded.add(blankLine);
-        expanded.add(blankLine);
+        if ((col < 0) || col >= height) {
+            return infinite;
+        }
+        return image.get(row).charAt(col) + "";
+    }
+
+    private List<String> expandImage(final List<String> image, int border) {
+        final int width = image.get(0).length();
+        final String blankLine = new String(new char[width + (2 * border)]).replace("\0", ".");
+        final String sidePad = new String(new char[border]).replace("\0", ".");
+        final List<String> expanded = new ArrayList<>();
+        for (int i = 0; i < border; i++) {
+            expanded.add(blankLine);
+        }
+        for (final String line : image) {
+            expanded.add(sidePad + line + sidePad);
+        }
+        for (int i = 0; i < border; i++) {
+            expanded.add(blankLine);
+        }
         return expanded;
     }
 
     private void printImage(final List<String> image) {
+        int index = 0;
         for (final String line : image) {
-            System.out.println(line);
+            System.out.println(padTo(index++ + "",3) + " " + line);
         }
         System.out.println();
     }
+
+    private String padTo(final String s, final int size) {
+        if (s.length() > size) {
+            return new String(new char[size]).replace("\0", "*");
+        }
+        return new String(new char[size - s.length()]).replace("\0", " ") + s;
+    }
+
 
     private long countLit(final List<String> image) {
         long lit = 0;
