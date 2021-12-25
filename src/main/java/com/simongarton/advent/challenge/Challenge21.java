@@ -3,12 +3,29 @@ package com.simongarton.advent.challenge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalTime;
+import java.util.HashMap;
+import java.util.Map;
+
 public class Challenge21 {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
+    private Map<Integer, Long> movesToWinPlayer1;
+    private Map<Integer, Long> movesToWinPlayer2;
+
     private static final String TITLE_1 = "Dirac Dice 1";
     private static final String TITLE_2 = "Dirac Dice 2";
+
+    /* I have a idea.
+
+    Take player 1 and run it recursively through all possibly games, finding out which move he finishes on
+    and building up a map of moves:times_found
+
+    Repeat for player 2.
+
+    Loop over all combinations and count up how many times 1 would have beaten 2.
+     */
 
     public void run(final String[] lines) {
 //        this.part1(lines);
@@ -52,8 +69,9 @@ public class Challenge21 {
         final long start = System.currentTimeMillis();
         final Player one = new Player(1, this.getPosition(lines[0]));
         final Player two = new Player(2, this.getPosition(lines[1]));
-        final GameState gameState = new GameState(one.makeCopy(), two.makeCopy());
-        gameState.kablooie();
+//        final GameState gameState = new GameState(one.makeCopy(), two.makeCopy());
+//        gameState.kablooie();
+        this.buildOutcomeMaps(one, two);
         final long result = 0;
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_2,
@@ -62,11 +80,38 @@ public class Challenge21 {
         return result;
     }
 
+    private void buildOutcomeMaps(final Player one, final Player two) {
+        this.movesToWinPlayer1 = new HashMap<>();
+        this.buildOutcomeMap(one, this.movesToWinPlayer1);
+        System.out.println(LocalTime.now() + " Player 1 done");
+        this.movesToWinPlayer2 = new HashMap<>();
+        this.buildOutcomeMap(two, this.movesToWinPlayer2);
+        System.out.println(LocalTime.now() + " Player 2 done");
+        long oneWins = 0;
+        long twoWins = 0;
+        for (final Map.Entry<Integer, Long> entry1 : this.movesToWinPlayer1.entrySet()) {
+            for (final Map.Entry<Integer, Long> entry2 : this.movesToWinPlayer1.entrySet()) {
+                if (entry1.getKey() <= entry2.getKey()) {
+                    oneWins += entry1.getValue() + entry1.getValue();
+                } else {
+                    twoWins += entry1.getValue() + entry1.getValue();
+                }
+            }
+        }
+        System.out.println(LocalTime.now() + " Done one " + oneWins + " two " + twoWins);
+    }
+
+    private void buildOutcomeMap(final Player one, final Map<Integer, Long> movesToWinPlayer) {
+        final OutcomeGenerator outcomeGenerator = new OutcomeGenerator(one, movesToWinPlayer);
+        outcomeGenerator.kablooie();
+    }
+
     public static final class Player {
         int id;
         int score;
         int position;
         int moves;
+        String moveSequence = "";
 
         public Player(final int id, final int position) {
             this.id = id;
@@ -86,7 +131,8 @@ public class Challenge21 {
         }
 
         private int moveTo(final int roll) {
-//            System.out.println("got roll " + roll + " was at position " + this.position);
+            this.moveSequence += roll + ",";
+            System.out.println("player " + id + " got roll " + roll + " was at position " + this.position + " : " + this.moveSequence + " and score " + this.score);
             this.position = this.position + roll;
             while (this.position > 10) {
                 this.position -= 10;
@@ -103,6 +149,7 @@ public class Challenge21 {
             final Player player = new Player(this.id, this.position);
             player.score = this.score;
             player.moves = this.moves;
+            player.moveSequence = this.moveSequence;
             return player;
         }
     }
@@ -132,96 +179,64 @@ public class Challenge21 {
         }
     }
 
-    public static final class GameState {
-
-        // I need to hold the state of the game - which will include the two players, their positions, scores,
-        // and then whose turn it is and which roll it is of 3.
-        // each state will then have three child states - moving onto the next roll, or turn, and checking to see if someone has won.
+    public static final class OutcomeGenerator {
 
         private static long counter = 0;
         private static long kablooies = 0;
-        private static long oneWins = 0;
-        private static long twoWins = 0;
 
-        private final long id;
-        private final Player one;
-        private final Player two;
-        private boolean oneToPlay;
+        private long id = 0;
+
+        private final Map<Integer, Long> movesToWinPlayer;
+
+        private final Player player;
         private int roll;  // this is the next roll to make
         private boolean complete;
-        private int winner;
+        private String moveSequence;
 
-        private GameState child1;
-        private GameState child2;
-        private GameState child3;
+        private OutcomeGenerator child1;
+        private OutcomeGenerator child2;
+        private OutcomeGenerator child3;
 
-        public GameState(final Player one, final Player two) {
-            this.id = counter++;
-            this.oneToPlay = true;
+        public OutcomeGenerator(final Player player, final Map<Integer, Long> movesToWinPlayer) {
+            this.id = ++counter;
             this.roll = 1;
             this.complete = false;
-            this.winner = 0;
-            this.one = one;
-            this.two = two;
+            this.player = player;
+            this.movesToWinPlayer = movesToWinPlayer;
         }
 
         public void kablooie() {
-            if (kablooies % 1000000 == 0) {
-                System.out.println("kablooie for " + this.id + " on " + kablooies + " one wins " + oneWins + " two wins " + twoWins);
-            }
-            kablooies++;
-//            System.out.println(" " + this.one);
-//            System.out.println(" " + this.two);
-            // if I have won already, then stop
+                System.out.println("kablooie for " + this.id + " on " + kablooies);
             if (this.complete) {
-//                System.out.println("kablooie for " + this.id + " on " + kablooies++ + " one wins " + oneWins + " two wins " + twoWins);
                 return;
             }
-            this.child1 = new GameState(this.one.makeCopy(), this.two.makeCopy());
-            this.child2 = new GameState(this.one.makeCopy(), this.two.makeCopy());
-            this.child3 = new GameState(this.one.makeCopy(), this.two.makeCopy());
+            if (kablooies % 1000000 == 0) {
+//                System.out.println("kablooie for " + this.id + " on " + kablooies + " one wins " + oneWins);
+            }
+            kablooies++;
+            this.child1 = new OutcomeGenerator(this.player.makeCopy(), this.movesToWinPlayer);
+            this.child2 = new OutcomeGenerator(this.player.makeCopy(), this.movesToWinPlayer);
+            this.child3 = new OutcomeGenerator(this.player.makeCopy(), this.movesToWinPlayer);
             this.child1.progressGame(this, 1);
             this.child2.progressGame(this, 2);
             this.child3.progressGame(this, 3);
-            this.child1.kablooie();
-            this.child2.kablooie();
-            this.child3.kablooie();
         }
 
-        private void progressGame(final GameState parent, final int diceRoll) {
-            this.oneToPlay = parent.oneToPlay;
+        private void progressGame(final OutcomeGenerator parent, final int diceRoll) {
             this.roll = parent.roll + 1;
+            this.player.moveTo(diceRoll);
             if (this.roll == 4) {
-                this.oneToPlay = !this.oneToPlay;
-            }
-            if (this.oneToPlay) {
-                this.one.moveTo(diceRoll);
-                if (this.roll == 4) {
-                    this.one.score += this.one.position;
-                    this.one.moves += 1;
-                    if (this.one.score >= 21) {
-//                        System.out.println("one won with a score of " + this.one.score + " on move " + this.one.moves);
-                        this.complete = true;
-                        this.winner = 1;
-                        oneWins++;
-                    }
+                this.player.score += this.player.position;
+                this.player.moves += 1;
+                // any higher than 18 goes badly
+                if (this.player.score >= 21) {
+                    this.complete = true;
+                    this.movesToWinPlayer.put(this.player.moves, this.movesToWinPlayer.getOrDefault(this.player.moves, 0L) + 1);
+                    return;
                 }
-            } else {
-                this.two.moveTo(diceRoll);
-                if (this.roll == 4) {
-                    this.two.score += this.two.position;
-                    this.two.moves += 1;
-                    if (this.two.score >= 21) {
-//                        System.out.println("two won with a score of " + this.two.score + " on move " + this.two.moves);
-                        this.complete = true;
-                        this.winner = 2;
-                        twoWins++;
-                    }
-                }
-            }
-            if (this.roll == 4) {
                 this.roll = 1;
             }
+            this.kablooie();
         }
     }
 }
