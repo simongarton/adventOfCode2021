@@ -102,8 +102,49 @@ public class Challenge21 {
     }
 
     private void buildOutcomeMap(final Player one, final Map<Integer, Long> movesToWinPlayer) {
-        final OutcomeGenerator outcomeGenerator = new OutcomeGenerator(one, movesToWinPlayer);
-        outcomeGenerator.kablooie();
+        final int stringLength = 24;
+        movesToWinPlayer.clear();
+
+        String original = new String(new char[stringLength]).replace("\0", "1");
+        this.playWithSequence(one, original, movesToWinPlayer);
+        final String end = new String(new char[stringLength]).replace("\0", "3");
+        while (true) {
+            original = this.nudgeString(original, original.length() - 1);
+            if (original.equalsIgnoreCase(end)) {
+                this.playWithSequence(one, original, movesToWinPlayer);
+                break;
+            }
+            this.playWithSequence(one, original, movesToWinPlayer);
+        }
+    }
+
+    private void playWithSequence(final Player one, final String sequence, final Map<Integer, Long> movesToWinPlayer) {
+        final Player player = new Player(0, one.position);
+        final int moves = player.playWithDie(new SequenceDie(sequence));
+        movesToWinPlayer.put(moves, movesToWinPlayer.getOrDefault(moves, 0L) + 1);
+    }
+
+    private String nudgeString(final String original, int position) {
+//        System.out.println("nudging " +  original + " at " + position);
+        int current = Integer.parseInt(original.substring(position, position + 1)) + 1;
+        boolean rollOver = false;
+        if (current == 4) {
+            rollOver = true;
+            current = 1;
+        }
+        final String updated = original.substring(0, position) + current + original.substring(position + 1);
+        if (!rollOver) {
+//            System.out.println("done nudging " +  updated + " at " + position);
+            return updated;
+        }
+        position--;
+        if (position == -1) {
+            // this never executes ...
+//            System.out.println("all finished with " + "3" + updated.substring(1));
+            return "3" + updated.substring(1);
+        }
+//        System.out.println("going to nudge " + updated + " at " + position);
+        return this.nudgeString(updated, position);
     }
 
     public static final class Player {
@@ -132,7 +173,7 @@ public class Challenge21 {
 
         private int moveTo(final int roll) {
             this.moveSequence += roll + ",";
-            System.out.println("player " + id + " got roll " + roll + " was at position " + this.position + " : " + this.moveSequence + " and score " + this.score);
+            //System.out.println("player " + this.id + " got roll " + roll + " was at position " + this.position + " : " + this.moveSequence + " and score " + this.score);
             this.position = this.position + roll;
             while (this.position > 10) {
                 this.position -= 10;
@@ -152,11 +193,44 @@ public class Challenge21 {
             player.moveSequence = this.moveSequence;
             return player;
         }
+
+        public int playWithDie(final SequenceDie sequenceDie) {
+            while (this.score <= 21) {
+                final int roll1 = sequenceDie.roll();
+                final int roll2 = sequenceDie.roll();
+                final int roll3 = sequenceDie.roll();
+                this.moveTo(roll1 + roll2 + roll3);
+                this.score += this.position;
+                this.moves += 1;
+            }
+            return this.moves;
+        }
     }
 
     public interface Die {
 
         int roll();
+    }
+
+    public static final class SequenceDie implements Die {
+
+        String sequence;
+        int index;
+
+        public SequenceDie(final String sequence) {
+            this.sequence = sequence;
+            this.index = 0;
+        }
+
+        @Override
+        public int roll() {
+            if (this.index >= this.sequence.length()) {
+                throw new RuntimeException("need more rolls : index " + this.index + " with " + this.sequence);
+            }
+            final int result = Integer.parseInt(this.sequence.substring(this.index, this.index + 1));
+            this.index++;
+            return result;
+        }
     }
 
     public static final class DeterministicDie implements Die {
@@ -206,7 +280,7 @@ public class Challenge21 {
         }
 
         public void kablooie() {
-                System.out.println("kablooie for " + this.id + " on " + kablooies);
+            System.out.println("kablooie for " + this.id + " on " + kablooies);
             if (this.complete) {
                 return;
             }
