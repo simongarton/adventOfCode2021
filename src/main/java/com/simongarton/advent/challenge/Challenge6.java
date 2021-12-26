@@ -43,7 +43,7 @@ public class Challenge6 {
     }
 
     private long breedFish(final long[] buckets, final int days) {
-        for (int day = 0; day < days; day++) {
+            for (int day = 0; day < days; day++) {
             final long breeders = buckets[0];
             for (int i = 0; i < 8; i++) {
                 buckets[i] = buckets[i + 1];
