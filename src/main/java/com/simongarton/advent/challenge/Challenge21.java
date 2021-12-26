@@ -9,13 +9,14 @@ import java.util.Map;
 
 public class Challenge21 {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
+    private static final int TRACK_END = 10;
+    private static final int PART2_WIN = 21;
+    private static final int PART2_DEPTH = 10;
 
     private static final String TITLE_1 = "Dirac Dice 1";
     private static final String TITLE_2 = "Dirac Dice 2";
 
-    private static final int PART2_WIN = 21;
-    private static final int PART2_DEPTH = 24;
+    private final Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
     private static final Map<Integer, Integer> moveUniverses = new HashMap<>();
 
@@ -30,7 +31,7 @@ public class Challenge21 {
     }
 
     public void run(final String[] lines) {
-        this.part1(lines);
+//        this.part1(lines);
         this.part2(lines);
     }
 
@@ -101,6 +102,7 @@ public class Challenge21 {
     private void buildOutcomeMap(final Player player, final Map<Integer, Long> movesToWinPlayer) {
         final int stringLength = PART2_DEPTH;
         movesToWinPlayer.clear();
+        Map<String, Long> winningSequences = new HashMap<>();
 
         /*
 
@@ -113,7 +115,10 @@ public class Challenge21 {
          */
 
         String sequence = new String(new char[stringLength]).replace("\0", "3");
-        this.playWithSequence(player, sequence, movesToWinPlayer);
+        WinRecord winRecord = this.playWithSequence(player, sequence, movesToWinPlayer);
+        if (!winningSequences.containsKey(winRecord.sequence)) {
+            winningSequences.put(winRecord.sequence, winRecord.possibleGames);
+        }
         final String end = new String(new char[stringLength]).replace("\0", "9");
         while (true) {
             sequence = this.nudgeString(sequence, sequence.length() - 1);
@@ -121,16 +126,36 @@ public class Challenge21 {
                 this.playWithSequence(player, sequence, movesToWinPlayer);
                 break;
             }
-            this.playWithSequence(player, sequence, movesToWinPlayer);
+            Integer triedThisBefore = haveTriedThisBefore(sequence, winningSequences);
+            if (triedThisBefore != null) {
+                movesToWinPlayer.put(movesToWinPlayer.get(triedThisBefore), calculatePossibleGames(w))
+            }
+            winRecord = this.playWithSequence(player, sequence, movesToWinPlayer);
+            if (!winningSequences.containsKey(winRecord.sequence)) {
+                winningSequences.put(winRecord.sequence, winRecord.possibleGames);
+            }
         }
     }
 
-    private void playWithSequence(final Player player, final String sequence, final Map<Integer, Long> movesToWinPlayer) {
+    public static final class
+
+    private WinRecord playWithSequence(final Player player, final String sequence, final Map<Integer, Long> movesToWinPlayer) {
         final Player newPlayer = new Player(0, player.position);
         final int moves = newPlayer.playWithDie(new SequenceDie(sequence));
         final long possibleGames = this.calculatePossibleGames(newPlayer.moveSequence);
-//        System.out.println(sequence + " moves " + moves + " games " + possibleGames);
+        System.out.println(sequence + " moves " + moves + " games " + possibleGames + " " + newPlayer.moveSequence);
         movesToWinPlayer.put(moves, movesToWinPlayer.getOrDefault(moves, 0L) + possibleGames);
+        return new WinRecord(newPlayer.moveSequence, possibleGames);
+    }
+
+    public static final class WinRecord {
+        String sequence;
+        long possibleGames;
+
+        public WinRecord(String sequence, long possibleGames) {
+            this.sequence = sequence;
+            this.possibleGames = possibleGames;
+        }
     }
 
     private long calculatePossibleGames(final String sequence) {
@@ -183,8 +208,8 @@ public class Challenge21 {
         private void moveTo(final int roll) {
             this.moveSequence += roll + "";
             this.position = this.position + roll;
-            while (this.position > 10) {
-                this.position -= 10;
+            while (this.position > TRACK_END) {
+                this.position -= TRACK_END;
             }
         }
 
