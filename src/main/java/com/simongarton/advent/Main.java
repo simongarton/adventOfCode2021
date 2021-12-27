@@ -133,7 +133,7 @@ public class Main {
     }
 
     private void day21() throws IOException {
-        final String[] lines = Files.readAllLines(Paths.get("data/day21-sample.txt")).toArray(new String[0]);
+        final String[] lines = Files.readAllLines(Paths.get("data/day21.txt")).toArray(new String[0]);
         new Challenge21().run(lines);
     }
 }
