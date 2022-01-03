@@ -39,13 +39,11 @@ public class Challenge13 {
     private Page fold(final Page page, boolean part1) {
         Page currentPage = page;
         for (final String fold : this.folds) {
-            System.out.println(fold);
             if (fold.contains("fold along x")) {
                 currentPage = this.foldPageAlongX(fold, currentPage);
             } else {
                 currentPage = this.foldPageAlongY(fold, currentPage);
             }
-            currentPage.printGrid();
             if (part1) {
                 break;
             }
@@ -126,7 +124,6 @@ public class Challenge13 {
         // coords are zero based
         final Page page = new Page(++width, ++height);
         page.loadCoords(coords);
-        page.printGrid();
         return page;
     }
 

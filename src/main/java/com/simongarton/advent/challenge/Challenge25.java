@@ -31,7 +31,6 @@ public class Challenge25 {
         this.height = lines.length;
         this.floor = new int[this.width * this.height];
         this.loadFloor(lines);
-        this.printFloor();
         final long result = this.iterateUntilBlocked();
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_1,
@@ -49,8 +48,6 @@ public class Challenge25 {
             if (moves == 0) {
                 break;
             }
-//            System.out.println("\n" + cycles + "\n");
-//            this.printFloor();
         }
         return cycles;
     }
@@ -131,9 +128,8 @@ public class Challenge25 {
     protected long part2(final String[] lines) {
         final long start = System.currentTimeMillis();
         final long result = 0;
-        this.logger.info(String.format("%s answer %d complete in %d ms",
+        this.logger.info(String.format("***  %s answer not found in %d ms",
                 TITLE_2,
-                result,
                 System.currentTimeMillis() - start));
         return result;
     }

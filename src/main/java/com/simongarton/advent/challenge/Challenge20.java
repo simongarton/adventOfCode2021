@@ -10,32 +10,8 @@ public class Challenge20 {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
-    private static final String TITLE_1 = "Template 1";
-    private static final String TITLE_2 = "Template 2";
-
-
-    /*
-
-    The sample works fine.
-
-    The actual image is "too high" but looking at the results, the top and bottom lines go solid ... which doesn't
-    feel right.
-
-    OK ... I think I see the trap. The algorithm at index 0 is # which means that all dark pixels surrounded by
-    dark pixels will go light. The algorithm at index 511 ("111111111") is . which means they will go dark again.
-    So as I expand out, I need to calculate if it's light or dark.
-
-    The main map will be flashing light, dark alternately.
-    The boundary needs to be calculated.
-
-    Hmm.
-
-    I think we just need to go well outside the likely expansion area ... and then run over all cells, and for
-    each neighbour outside the range, it's either going to be on if it's an odd step, or off if it's an even step ...
-    ... which I can probably read from rule 0.
-
-
-     */
+    private static final String TITLE_1 = "Trench Map 1";
+    private static final String TITLE_2 = "Trench Map 2";
 
     private String algorithm;
 
@@ -46,24 +22,25 @@ public class Challenge20 {
 
     protected long part1(final String[] lines) {
         final long start = System.currentTimeMillis();
-        this.algorithm = lines[0];
-        List<String> image = new ArrayList<>();
-        for (int i = 2; i < lines.length; i++) {
-            image.add(lines[i]);
-        }
-        printImage(image);
-        image = this.expandImage(image, 60);
-        printImage(image);
-        for (int step = 1; step <= 50; step++) {
-            image = this.processImage(image, step);
-            this.printImage(image);
-        }
-        final long result = this.countLit(image);
+        final long result = this.processImageCommon(lines, 2);
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_1,
                 result,
                 System.currentTimeMillis() - start));
         return result;
+    }
+
+    private long processImageCommon(final String[] lines, final int iterations) {
+        this.algorithm = lines[0];
+        List<String> image = new ArrayList<>();
+        for (int i = 2; i < lines.length; i++) {
+            image.add(lines[i]);
+        }
+        image = this.expandImage(image, 60);
+        for (int step = 1; step <= iterations; step++) {
+            image = this.processImage(image, step);
+        }
+        return this.countLit(image);
     }
 
     private void debugPattern(final List<String> image, final int row, final int col, final int step) {
@@ -80,14 +57,13 @@ public class Challenge20 {
         final List<String> processed = new ArrayList<>();
 
         for (int row = 0; row < height; row++) {
-            String newLine = "";
+            final StringBuilder newLine = new StringBuilder();
             for (int col = 0; col < width; col++) {
                 final String pattern = this.readPattern(image, row, col, step);
                 final String binary = this.patternToBinary(pattern);
                 final int encoded = Integer.parseInt(binary, 2);
                 final String enhanced = this.algorithm.charAt(encoded) + "";
-//                System.out.println(row + "," + col + " : " + encoded + " = " + enhanced + " for " + pattern + " (" + binary + ")");
-                newLine += enhanced;
+                newLine.append(enhanced);
             }
             processed.add(newLine + "");
         }
@@ -129,7 +105,7 @@ public class Challenge20 {
         return image.get(row).charAt(col) + "";
     }
 
-    private List<String> expandImage(final List<String> image, int border) {
+    private List<String> expandImage(final List<String> image, final int border) {
         final int width = image.get(0).length();
         final String blankLine = new String(new char[width + (2 * border)]).replace("\0", ".");
         final String sidePad = new String(new char[border]).replace("\0", ".");
@@ -149,7 +125,7 @@ public class Challenge20 {
     private void printImage(final List<String> image) {
         int index = 0;
         for (final String line : image) {
-            System.out.println(padTo(index++ + "",3) + " " + line);
+            System.out.println(this.padTo(index++ + "", 3) + " " + line);
         }
         System.out.println();
     }
@@ -161,7 +137,6 @@ public class Challenge20 {
         return new String(new char[size - s.length()]).replace("\0", " ") + s;
     }
 
-
     private long countLit(final List<String> image) {
         long lit = 0;
         for (final String line : image) {
@@ -172,7 +147,7 @@ public class Challenge20 {
 
     protected long part2(final String[] lines) {
         final long start = System.currentTimeMillis();
-        final long result = 0;
+        final long result = this.processImageCommon(lines, 50);
         this.logger.info(String.format("%s answer %d complete in %d ms",
                 TITLE_2,
                 result,

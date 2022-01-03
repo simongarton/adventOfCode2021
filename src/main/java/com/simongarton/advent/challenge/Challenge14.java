@@ -124,7 +124,6 @@ public class Challenge14 {
     }
 
     protected long scoreMap(final Map<String, Long> map) {
-        this.debugPairs("scoreMap", map);
         long min = Long.MAX_VALUE;
         String minChar = "";
         long max = 0;

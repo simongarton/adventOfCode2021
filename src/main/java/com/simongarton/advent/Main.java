@@ -15,28 +15,28 @@ public class Main {
     }
 
     private void run() throws IOException {
-//        this.day1();
-//        this.day2();
-//        this.day3();
-//        this.day4();
-//        this.day5();
-//        this.day6();
-//        this.day7();
-//        this.day8();
-//        this.day10();
-//        this.day11();
-//        this.day12();
-//        this.day13();
-//        this.day14();
-//        this.day15();
-//        this.day16();
-//        this.day17();
-//        this.day18();
-//        this.day19();
-//        this.day20();
-//        this.day21();
+        this.day1();
+        this.day2();
+        this.day3();
+        this.day4();
+        this.day5();
+        this.day6();
+        this.day7();
+        this.day8();
+        this.day10();
+        this.day11();
+        this.day12();
+        this.day13();
+        this.day14();
+        this.day15();
+        this.day16();
+        this.day17();
+        this.day18();
+        this.day19();
+        this.day20();
+        this.day21();
         this.day24();
-//        this.day25();
+        this.day25();
     }
 
     private void day1() throws IOException {

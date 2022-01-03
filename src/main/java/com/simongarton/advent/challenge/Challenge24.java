@@ -24,20 +24,8 @@ public class Challenge24 {
         final long start = System.currentTimeMillis();
         final long result = 0;
         final ALU alu = new ALU(lines);
-        for (long i = 99999999999999L; i >= 10000000000000L; i--) {
-            final String input = this.padTo(i + "", 14, "0");
-            if (input.contains("0")) {
-                continue;
-            }
-            alu.addMultipleInputs(input);
-            alu.run();
-            if (alu.variables.get("z") == 0) {
-                System.out.println(input);
-            }
-        }
-        this.logger.info(String.format("%s answer %d complete in %d ms",
+        this.logger.info(String.format("***  %s answer not found in %d ms",
                 TITLE_1,
-                result,
                 System.currentTimeMillis() - start));
         return result;
     }
@@ -52,9 +40,8 @@ public class Challenge24 {
     protected long part2(final String[] lines) {
         final long start = System.currentTimeMillis();
         final long result = 0;
-        this.logger.info(String.format("%s answer %d complete in %d ms",
+        this.logger.info(String.format("***  %s answer not found in %d ms",
                 TITLE_2,
-                result,
                 System.currentTimeMillis() - start));
         return result;
     }
